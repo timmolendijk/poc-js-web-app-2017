@@ -1,0 +1,15 @@
+.Event {
+  border: 1px solid silver;
+  padding: 1rem 2rem;
+}
+
+.Event .media {
+  max-width: 10rem;
+  background-color: lightyellow;
+}
+
+.Event .media .member {
+  height: 10rem;
+  background-size: cover;
+  background-repeat: no-repeat;
+}

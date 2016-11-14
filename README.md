@@ -1,11 +1,12 @@
-# React-TypeScript
+Proof of concept for universal JavaScript web application that elegantly combines the following features:
 
-Minimal boilerplate for a single-page app using MobX, React and TypeScript with TSX.
-
-Initial run:
-
-* Install Node.js
-* `npm install`
-* `npm start`
-
-For simplicity sake Webpack Hot Module Reloading is disabled. If you want to use HMR, see the [Reactive2015 demo](https://github.com/mobxjs/mobx-reactive2015-demo) to see a valid setup.
+* written in TypeScript;
+* view layer implemented based on React;
+* routing based on React Router v4;
+* server-side renderer supports generating various page types depending on route match;
+* server-side renderer will automagically await pending data requests;
+* supports state management using MobX;
+* client-side view rendering can take over where server-side rendering left off;
+* can render valid Accelerated Mobile Pages;
+* write modular component-based styling;
+* render style sheets at run-time based on current view.

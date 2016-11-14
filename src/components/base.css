@@ -1,0 +1,18 @@
+body {
+  font-family: Lato, sans-serif;
+  font-weight: 400;
+  background-image: url('https://secure.meetupstatic.com/photos/theme_body/9/5/c/5/full_7238341.jpeg');
+  background-size: 1000px auto;
+}
+
+h1 {
+  font-weight: 300;
+}
+
+figure {
+  margin: 0;
+}
+
+[role="button"] {
+  cursor: pointer;
+}
