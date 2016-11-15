@@ -4,13 +4,13 @@ import { Match, Miss } from 'react-router';
 import * as Helmet from 'react-helmet';
 import { ServerStyled } from 'style';
 
-import Store from '../models/Store';
+import State from '../models/State';
 import Base from './Base';
 import Page from './Page';
 import Event from './Event';
 import NotFound from './NotFound';
 
-export default class AmpBase extends React.Component<{ store: Store }, { }> {
+export default class AmpBase extends React.Component<{ state: State }, { }> {
 
   render() {
     const ampStandardLib = {
@@ -18,7 +18,7 @@ export default class AmpBase extends React.Component<{ store: Store }, { }> {
       src: "https://cdn.ampproject.org/v0.js"
     };
 
-    return <Base store={this.props.store}>
+    return <Base state={this.props.state}>
       <Page>
         <Helmet script={[ampStandardLib]} />
         <Match pattern="/event" component={Event} />
@@ -27,7 +27,7 @@ export default class AmpBase extends React.Component<{ store: Store }, { }> {
     </Base>;
   }
 
-  static renderToDocument(component, store?: Store) {
+  static renderToDocument(component, state?: State) {
     const renderedComponent = renderToStaticMarkup(
       <ServerStyled singleton={{ 'amp-custom': undefined }}>{component}</ServerStyled>
     );

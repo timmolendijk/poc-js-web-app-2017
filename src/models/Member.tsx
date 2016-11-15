@@ -1,61 +1,139 @@
 import * as url from 'url';
-import { observable, computed } from 'mobx';
-import * as fetch from 'isomorphic-fetch';
-import * as jsonp from 'jsonp';
-import * as promisify from 'es6-promisify';
+import { observable, action, when } from 'mobx';
 
-interface MeetupMember {
-  id: number;
-  name: string;
-  joined: number;
-  photo?: {
-    thumb_link: string;
-    [field: string]: any;
-  };
-  [field: string]: any;
+import { Http } from './Http';
+
+interface SerializedMemberCollection {
+  data: SerializedMember[];
 }
 
-export default class Member {
+class MemberCollection {
 
-  @observable id: number;
-  @observable name: string;
-  @observable joined: number;
-  @observable image?: string;
-
-  constructor(data: MeetupMember) {
-    this.id = data.id;
-    this.name = data.name;
-    this.joined = data.joined;
-    if (data.photo)
-      this.image = data.photo.thumb_link;
+  constructor(http: Http, data?: Member[]);
+  constructor(http: Http, data?: SerializedMember[]);
+  constructor(http: Http, data?: SerializedMemberCollection);
+  constructor(private readonly http: Http, data?: any) {
+    if (data && data.data)
+      data = data.data;
+    if (data instanceof Array)
+      this.data = data.map(Member.instance);
   }
 
-  @computed get url() {
+  private data: Member[] = null;
+  @observable private pending: number = 0;
+
+  get stable(): Promise<any> | void {
+    if (this.pending === 0)
+      return;
+    
+    return new Promise(resolve =>
+      when(
+        () => this.pending === 0,
+        resolve
+      )
+    );
+  }
+  
+  get isLoaded(): boolean {
+    return Boolean(this.data);
+  }
+
+  all({ incremental = false }: { incremental?: boolean } = { }): Member[] {
+    // TODO(tim): Load all data, unless `incremental` is true in which case we
+    // should persist which data remains to be loaded, and implement some kind
+    // of resume method that will trigger it.
+    if (!this.isLoaded)
+      this.load();
+    
+    return this.data || [];
+  }
+
+  @action async load() {
+    this.pending++;
+    const endpoint = url.format({
+      protocol: 'https',
+      hostname: 'api.meetup.com',
+      pathname: 'AmsterdamJS/members',
+      query: {
+        desc: 'false',
+        'photo-host': 'public',
+        page: 200,
+        sig_id: '5314113',
+        order: 'joined',
+        sig: '40ce35726d361ace595406080daf3ac36826bf05'
+      }
+    });
+    let data;
+    try {
+      data = await this.http(endpoint);
+    } catch (err) {
+      this.data = null;
+    } finally {
+      this.pending--;
+    }
+    this.data = data.map(Member.instance);
+  }
+
+}
+
+type Id = number;
+type Url = string;
+
+interface MemberData {
+  id: Id;
+  name: string;
+  photo?: {
+    thumb_link: Url
+  };
+  [other: string]: any;
+  data?: never;
+}
+
+interface SerializedMember {
+  data: MemberData;
+}
+
+class Member {
+
+  private constructor(data: MemberData);
+  private constructor(data: SerializedMember);
+  private constructor(data) {
+    if (data.data)
+      data = data.data;
+    this.data = data;
+  }
+
+  static instance(data: Member);
+  static instance(data: MemberData);
+  static instance(data) {
+    if (data instanceof Member)
+      return data;
+    return new Member(data);
+  }
+
+  // TODO(tim): `Member.Collection` does not seem to be usable as a type.
+  static readonly Collection = MemberCollection;
+
+  private data: MemberData;
+
+  get id(): Id {
+    return this.data.id;
+  }
+  get name(): string {
+    return this.data.name;
+  }
+  get image(): Url {
+    if (!this.data.photo)
+      return null;
+    return this.data.photo.thumb_link;
+  }
+  get profile(): Url {
     return `http://www.meetup.com/AmsterdamJS/members/${this.id}/`;
   }
 
 }
 
-const jsonpAsync = promisify(jsonp);
+export { Member, MemberCollection };
 
-export async function jsonpMeetupMembers(): Promise<MeetupMember[]> {
-  // TODO(tim): Use `url.format` to build URL.
-  const url = "https://api.meetup.com/AmsterdamJS/members?desc=false&photo-host=public&page=200&sig_id=5314113&order=joined&sig=40ce35726d361ace595406080daf3ac36826bf05";
-  const { data, meta } = await jsonpAsync(url, { });
-  if (data.errors && data.errors.length) {
-    const { code, message } = data.errors[0];
-    throw new Error(`${code}: ${message}`);
-  }
-  return data;
-}
-
-export async function fetchMeetupMembers(): Promise<MeetupMember[]> {
-  // TODO(tim): Use `url.format` to build URL.
-  const url = "https://api.meetup.com/AmsterdamJS/members?desc=false&photo-host=public&page=200&sig_id=5314113&order=joined&sig=40ce35726d361ace595406080daf3ac36826bf05";
-  const response = await fetch(url, {
-    cache: 'no-cache'
-  });
-  if (!response.ok)
-    throw new Error(`${response.status}: ${response.statusText}`);
-  return await response.json();
-}
+// TODO(tim): Useful? Or confusing?
+export default Member;

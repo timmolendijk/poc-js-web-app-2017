@@ -4,16 +4,16 @@ import { Match, Miss } from 'react-router';
 import * as Helmet from 'react-helmet';
 import { ServerStyled } from 'style';
 
-import Store from '../models/Store';
+import State from '../models/State';
 import Base from './Base';
 import Page from './Page';
 import Home from './Home';
 import NotFound from './NotFound';
 
-export default class DynamicBase extends React.Component<{ store: Store }, { }> {
+export default class DynamicBase extends React.Component<{ state: State }, { }> {
 
   render() {
-    return <Base store={this.props.store}>
+    return <Base state={this.props.state}>
       <Page>
         <Match exactly pattern="/" component={Home} />
         <Miss component={NotFound} />
@@ -21,7 +21,7 @@ export default class DynamicBase extends React.Component<{ store: Store }, { }> 
     </Base>;
   }
 
-  static renderToDocument(component, store: Store) {
+  static renderToDocument(component, state: State) {
     const renderedComponent = renderToStaticMarkup(
       <ServerStyled clientContainerId="root" serialize={true}>{component}</ServerStyled>
     );
@@ -37,7 +37,7 @@ export default class DynamicBase extends React.Component<{ store: Store }, { }> 
         <body>
           <div dangerouslySetInnerHTML={{ __html: renderedComponent }} />
           <script dangerouslySetInnerHTML={{
-            __html: `window.__STORE__ = ${JSON.stringify(store.serialize())};`
+            __html: `window.__STATE__ = ${JSON.stringify(state)};`
           }} />
           <script src="http://localhost:3001/static/client.js" />
         </body>

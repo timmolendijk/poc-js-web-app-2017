@@ -6,9 +6,10 @@ import * as React from 'react';
 import { observer } from 'mobx-react';
 import { Style } from 'style';
 
+import State from '../models/State';
 import MemberChart from './MemberChart';
 
-export default observer(['store'], function Home({ store }) {
+export default observer(['state'], function Home({ state }: { state: State }) {
 
   return <div className="Home">
     <Style>{styles}</Style>
@@ -16,7 +17,7 @@ export default observer(['store'], function Home({ store }) {
       <img className="brand" src={brandUrl} alt="AmsterdamJS" />
     </h1>
     <h2>Home</h2>
-    <MemberChart members={store.members} />
+    <MemberChart members={state.members.all({ incremental: true })} />
   </div>;
 
 });

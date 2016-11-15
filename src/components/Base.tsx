@@ -1,24 +1,24 @@
-import * as styles from './base.css';
+import * as styles from './Base.css';
 
 import * as React from 'react';
 import { Provider } from 'mobx-react';
 import { Style } from 'style';
 
-import Store from '../models/Store';
+import State from '../models/State';
 
 interface Props {
-  store: Store,
+  state: State,
   children?: any
 }
 
 export interface BaseConstructor {
   new (props: Props): React.Component<Props, { }>;
-  renderToDocument(component, store): string;
+  renderToDocument(component, state): string;
 }
 
-export default function Base({ store, children }: Props) {
+export default function Base({ state, children }: Props) {
   return <div>
     <Style>{styles}</Style>
-    <Provider store={store}>{children}</Provider>
+    <Provider state={state}>{children}</Provider>
   </div>;
 }
