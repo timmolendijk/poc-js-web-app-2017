@@ -22,7 +22,7 @@ class MemberCollection {
   private data: Member[] = null;
   @observable private pending: number = 0;
 
-  get stable(): Promise<any> | void {
+  get stable(): Promise<any> {
     if (this.pending === 0)
       return;
     
