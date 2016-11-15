@@ -48,6 +48,8 @@ class MemberCollection {
     return this.data || [];
   }
 
+  // TODO(tim): Are we sure `@action` is used in a purposeful manner here? which
+  // purpose exactly?
   @action async load() {
     this.pending++;
     const endpoint = url.format({

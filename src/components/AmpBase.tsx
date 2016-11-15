@@ -29,7 +29,9 @@ export default class AmpBase extends React.Component<{ state: State }, { }> {
 
   static renderToDocument(component, state?: State) {
     const renderedComponent = renderToStaticMarkup(
-      <ServerStyled singleton={{ 'amp-custom': undefined }}>{component}</ServerStyled>
+      <ServerStyled singleton={{ 'amp-custom': undefined }}>
+        {component}
+      </ServerStyled>
     );
     const { title, link, style, script } = Helmet.rewind();
 

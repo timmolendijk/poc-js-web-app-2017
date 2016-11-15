@@ -23,7 +23,9 @@ export default class DynamicBase extends React.Component<{ state: State }, { }> 
 
   static renderToDocument(component, state: State) {
     const renderedComponent = renderToStaticMarkup(
-      <ServerStyled clientContainerId="root" serialize={true}>{component}</ServerStyled>
+      <ServerStyled clientContainerId="root" serialize={true}>
+        {component}
+      </ServerStyled>
     );
     const { title, link, style } = Helmet.rewind();
 
