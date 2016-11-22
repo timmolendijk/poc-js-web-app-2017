@@ -23,32 +23,81 @@ const endpoints = new Map([
 ]);
 
 export interface Transport {
-  list(Model, { incremental: boolean }): Promise<ReadonlyArray<any>>;
+  list(Model, { cursor, isVirgin }: { cursor?: string, isVirgin?: boolean });
 }
 
 export const server: Transport = {
 
-  async list(Model) {
-    if (Model === Member) {
-      const response = await fetch(endpoints.get(Model));
-      if (!response.ok)
-        throw new Error(`${response.status}: ${response.statusText}`);
-      return await response.json();
-    }
+  list(Model, { cursor = endpoints.get(Model), isVirgin = true } = { }) {
+    if (Model === Member)
+      return {
+        cursor,
+        isVirgin,
+        async step() {
+          // TODO(tim): Better naming (maybe represent as step number?) and make
+          // immutable.
+          this.isVirgin = false;
+          const response = await fetch(this.cursor);
+          this.cursor = null;
+          if (!response.ok)
+            throw new Error(`${response.status}: ${response.statusText}`);
+          for (const link of response.headers.getAll('link')) {
+            const match = link.match(/^\<(.+)\>; rel="next"$/);
+            if (match)
+              this.cursor = match[1];
+          }
+          return await response.json();
+        },
+        next(): IteratorResult<Promise<ReadonlyArray<Member>>> {
+          if (!this.cursor)
+            return { done: true, value: undefined };
+          
+          const value = this.step();
+          return { done: false, value };
+        },
+        [Symbol.iterator]() {
+          return this;
+        }
+        // TODO(tim): What do `return` and `throw` methods do?
+      };
   }
 
 };
 
 export const client: Transport = {
 
-  async list(Model) {
+  list(Model, { cursor = endpoints.get(Model), isVirgin = true } = { }) {
     if (Model === Member) {
-      const { data, meta } = await jsonpAsync(endpoints.get(Model), { });
-      if (data.errors && data.errors.length) {
-        const { code, message } = data.errors[0];
-        throw new Error(`${code}: ${message}`);
-      }
-      return data;
+      return {
+        cursor,
+        // TODO(tim): Better naming (maybe represent as step number?) and make
+        // immutable.
+        isVirgin,
+        async step() {
+          this.isVirgin = false;
+          const response = await jsonpAsync(this.cursor, {
+            param: 'callback',
+            name: 'cb'
+          });
+          this.cursor = null;
+          if (response.data.errors && response.data.errors.length)
+            throw new Error(`${response.data.errors[0].code}: ${response.data.errors[0].message}`);
+          if (response.meta.next_link)
+            this.cursor = response.meta.next_link;
+          return response.data;
+        },
+        next(): IteratorResult<Promise<ReadonlyArray<Member>>> {
+          if (!this.cursor)
+            return { done: true, value: undefined };
+          
+          const value = this.step();
+          return { done: false, value };
+        },
+        [Symbol.iterator]() {
+          return this;
+        }
+        // TODO(tim): What do `return` and `throw` methods do?
+      };
     }
   }
 

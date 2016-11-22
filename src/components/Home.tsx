@@ -3,14 +3,14 @@ import * as styles from './Home.css';
 import * as brandUrl from './brand.png';
 
 import * as React from 'react';
-import { observer } from 'mobx-react';
+import { inject } from 'mobx-react';
 import { Style } from 'style';
 
 import State from '../models/State';
 import Member from '../models/Member';
 import MemberChart from './MemberChart';
 
-export default observer(['state'], function Home({ state }: { state: State }) {
+export default inject<{ state: State }>('state')(function Home({ state }) {
 
   return <div className="Home">
     <Style>{styles}</Style>

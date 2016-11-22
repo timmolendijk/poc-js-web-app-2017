@@ -29,16 +29,25 @@ export class Member implements SerializedMember {
 
 export interface SerializedMemberCollection {
   data: SerializedMember[];
+  loader: { cursor: string };
 }
+
+interface CollectionLoader<M> extends IterableIterator<Promise<ReadonlyArray<M>>> {
+  cursor: string;
+  isVirgin: boolean;
+} 
 
 export class MemberCollection {
 
   constructor(private readonly state: State, data?: SerializedMemberCollection) {
-    if (data)
+    if (data && data.data)
       this.data = data.data.map(d => this.state.getInstance(Member, d));
+    this.loader = this.state.transport.list(Member, data && data.loader);
   }
 
-  private data: Member[] = null;
+  @observable private data: Member[] = [];
+  private loader: CollectionLoader<Member>;
+  
   @observable private pending: number = 0;
 
   get stable(): Promise<any> {
@@ -54,33 +63,62 @@ export class MemberCollection {
   }
 
   get(): Member[] {
-    if (this.data)
-      return this.data;
-    
-    this.load();
-    return [];
+    if (this.loader.cursor)
+      if (this.loader.isVirgin)
+        this.load();
+      else if (this.allowResumeLoad)
+        this.resumeLoad();
+
+    return this.data;
   }
 
-  @action async load() {
-    this.pending++;
-    const payload = this.state.transport.list(Member, { incremental: true });
+  private async load() {
+    // TODO(tim): Do not blindly assume that this first chunk exists.
+    const chunk = this.loader.next().value;
+    await this.loadChunk(chunk);
+  }
+
+  allowResumeLoad: boolean = false;
+
+  private async resumeLoad() {
+    this.allowResumeLoad = false;
+
+    for (const chunk of this.loader) {
+      await this.loadChunk(chunk);
+    }
+  }
+
+  private async loadChunk(chunk) {
+    // TODO(tim): Too late?
+    this.startLoadChunk();
     let data;
     try {
-      data = await payload;
+      data = await chunk;
     } catch (err) {
-      this.data = null;
-    } finally {
-      this.pending--;
+      // TODO(tim): This will cause an infinite iteration of load attempts.
+      this.endLoadChunk(null);
     }
-    this.data = data.map(d => this.state.getInstance(Member, {
+    this.endLoadChunk(data.map(d => this.state.getInstance(Member, {
       id: d.id,
       name: d.name,
       image: d.photo ? d.photo.thumb_link : null
-    }));
+    })));
+  }
+
+  @action private startLoadChunk() {
+    this.pending++;
+  }
+
+  @action private endLoadChunk(data) {
+    this.pending--;
+    if (data)
+      this.data.push(...data);
+    else
+      this.data = []; 
   }
 
   toJSON() {
-    return pick(this, ['data']);
+    return pick(this, ['data', 'loader']);
   }
 
 }

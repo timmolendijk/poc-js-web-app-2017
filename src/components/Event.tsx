@@ -8,27 +8,34 @@ import AmpImg from './AmpImg';
 
 const name = "My Event";
 
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'amp-youtube': any;
+      'amp-image-lightbox': any;
+    }
+  }
+}
+
 function AmpYoutube(props) {
-  const Component = 'amp-youtube';
   return <div>
     <Helmet script={[{
       async: undefined,
-      'custom-element': Component,
+      'custom-element': 'amp-youtube',
       src: "https://cdn.ampproject.org/v0/amp-youtube-0.1.js"
     }]} />
-    <Component {...props} />
+    <amp-youtube {...props} />
   </div>;
 }
 
 function AmpImageLightbox(props) {
-  const Component = 'amp-image-lightbox';
   return <div>
     <Helmet script={[{
       async: undefined,
-      'custom-element': Component,
+      'custom-element': 'amp-image-lightbox',
       src: "https://cdn.ampproject.org/v0/amp-image-lightbox-0.1.js"
     }]} />
-    <Component {...props} />
+    <amp-image-lightbox {...props} />
   </div>;
 }
 

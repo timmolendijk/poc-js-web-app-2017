@@ -1,15 +1,21 @@
 import * as React from 'react';
 import * as Helmet from 'react-helmet';
 
-const ComponentName = 'amp-img';
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'amp-img': any;
+    }
+  }
+}
 
 export default function AmpImg(props) {
 
-  return <ComponentName {...props}>
+  return <amp-img {...props}>
     <Helmet script={[{
       async: undefined,
       src: "https://cdn.ampproject.org/v0.js"
     }]} />
-  </ComponentName>;
+  </amp-img>;
 
 }

@@ -1,12 +1,13 @@
 import * as styles from './MemberChart.css'
 
 import * as React from 'react';
+import { observer } from 'mobx-react';
 import { Style } from 'style';
 
 import Member from '../models/Member';
 import MemberCard from './MemberCard';
 
-export default function MemberChart({ members }: { members: Member[] }) {
+export default observer(function MemberChart({ members }: { members: Member[] }) {
 
   if (!members.length)
     return null;
@@ -18,4 +19,4 @@ export default function MemberChart({ members }: { members: Member[] }) {
     )}
   </div>;
 
-}
+});

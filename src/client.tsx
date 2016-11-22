@@ -9,6 +9,8 @@ import DynamicBase from './components/DynamicBase';
 
 const state = new State(clientTransport, (window as any).__STATE__);
 
+state.allowResumeLoad = true;
+
 render(
   <ClientStyled>
     <BrowserRouter>

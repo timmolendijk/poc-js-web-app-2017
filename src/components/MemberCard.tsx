@@ -9,8 +9,8 @@ export default function MemberCard({ member }: { member: Member }) {
 
   const backgroundImage = member.image && `url(${member.image})`;
   
-  return <a key={member.id} href={member.profile} target="_blank"
-    className="MemberCard" style={{ backgroundImage }}>
+  return <a key={member.id} href={member.profile} title={member.name}
+    target="_blank" className="MemberCard" style={{ backgroundImage }}>
     <Style>{styles}</Style>
     <span className="name">{member.name}</span>
   </a>;

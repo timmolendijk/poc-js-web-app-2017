@@ -28,6 +28,10 @@ export default class State {
     return Promise.all(busy);
   }
 
+  set allowResumeLoad(value: boolean) {
+    this.members.allowResumeLoad = value;
+  }
+
   getInstance(Model, data) {
     return new Model(data);
   }
