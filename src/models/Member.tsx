@@ -1,22 +1,41 @@
-import * as url from 'url';
-import { observable, action, when } from 'mobx';
+import { observable, when, action } from 'mobx';
+import { pick } from 'lodash';
 
-import { Http } from './Http';
+import State from './State';
 
-interface SerializedMemberCollection {
+export interface SerializedMember {
+  id: number;
+  name: string;
+  image: string;
+}
+
+export class Member implements SerializedMember {
+
+  constructor(data?: SerializedMember) {
+    Object.keys(data).forEach(key => {
+      this[key] = data[key];
+    });
+  }
+
+  readonly id;
+  readonly name;
+  readonly image;
+
+  get profile(): string {
+    return `http://www.meetup.com/AmsterdamJS/members/${this.id}/`;
+  }
+
+}
+
+export interface SerializedMemberCollection {
   data: SerializedMember[];
 }
 
-class MemberCollection {
+export class MemberCollection {
 
-  constructor(http: Http, data?: Member[]);
-  constructor(http: Http, data?: SerializedMember[]);
-  constructor(http: Http, data?: SerializedMemberCollection);
-  constructor(private readonly http: Http, data?: any) {
-    if (data && data.data)
-      data = data.data;
-    if (data instanceof Array)
-      this.data = data.map(Member.instance);
+  constructor(private readonly state: State, data?: SerializedMemberCollection) {
+    if (data)
+      this.data = data.data.map(d => this.state.getInstance(Member, d));
   }
 
   private data: Member[] = null;
@@ -33,109 +52,38 @@ class MemberCollection {
       )
     );
   }
-  
-  get isLoaded(): boolean {
-    return Boolean(this.data);
-  }
 
-  all({ incremental = false }: { incremental?: boolean } = { }): Member[] {
-    // TODO(tim): Load all data, unless `incremental` is true in which case we
-    // should persist which data remains to be loaded, and implement some kind
-    // of resume method that will trigger it.
-    if (!this.isLoaded)
-      this.load();
+  get(): Member[] {
+    if (this.data)
+      return this.data;
     
-    return this.data || [];
+    this.load();
+    return [];
   }
 
-  // TODO(tim): Are we sure `@action` is used in a purposeful manner here? which
-  // purpose exactly?
   @action async load() {
     this.pending++;
-    const endpoint = url.format({
-      protocol: 'https',
-      hostname: 'api.meetup.com',
-      pathname: 'AmsterdamJS/members',
-      query: {
-        desc: 'false',
-        'photo-host': 'public',
-        page: 200,
-        sig_id: '5314113',
-        order: 'joined',
-        sig: '40ce35726d361ace595406080daf3ac36826bf05'
-      }
-    });
+    const payload = this.state.transport.list(Member, { incremental: true });
     let data;
     try {
-      data = await this.http(endpoint);
+      data = await payload;
     } catch (err) {
       this.data = null;
     } finally {
       this.pending--;
     }
-    this.data = data.map(Member.instance);
+    this.data = data.map(d => this.state.getInstance(Member, {
+      id: d.id,
+      name: d.name,
+      image: d.photo ? d.photo.thumb_link : null
+    }));
+  }
+
+  toJSON() {
+    return pick(this, ['data']);
   }
 
 }
-
-type Id = number;
-type Url = string;
-
-interface MemberData {
-  id: Id;
-  name: string;
-  photo?: {
-    thumb_link: Url
-  };
-  [other: string]: any;
-  data?: never;
-}
-
-interface SerializedMember {
-  data: MemberData;
-}
-
-class Member {
-
-  private constructor(data: MemberData);
-  private constructor(data: SerializedMember);
-  private constructor(data) {
-    if (data.data)
-      data = data.data;
-    this.data = data;
-  }
-
-  static instance(data: Member);
-  static instance(data: MemberData);
-  static instance(data) {
-    if (data instanceof Member)
-      return data;
-    return new Member(data);
-  }
-
-  // TODO(tim): `Member.Collection` does not seem to be usable as a type.
-  static readonly Collection = MemberCollection;
-
-  private data: MemberData;
-
-  get id(): Id {
-    return this.data.id;
-  }
-  get name(): string {
-    return this.data.name;
-  }
-  get image(): Url {
-    if (!this.data.photo)
-      return null;
-    return this.data.photo.thumb_link;
-  }
-  get profile(): Url {
-    return `http://www.meetup.com/AmsterdamJS/members/${this.id}/`;
-  }
-
-}
-
-export { Member, MemberCollection };
 
 // TODO(tim): Useful? Or confusing?
 export default Member;

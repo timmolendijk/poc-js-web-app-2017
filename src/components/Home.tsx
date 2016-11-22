@@ -7,6 +7,7 @@ import { observer } from 'mobx-react';
 import { Style } from 'style';
 
 import State from '../models/State';
+import Member from '../models/Member';
 import MemberChart from './MemberChart';
 
 export default observer(['state'], function Home({ state }: { state: State }) {
@@ -17,7 +18,7 @@ export default observer(['state'], function Home({ state }: { state: State }) {
       <img className="brand" src={brandUrl} alt="AmsterdamJS" />
     </h1>
     <h2>Home</h2>
-    <MemberChart members={state.members.all({ incremental: true })} />
+    <MemberChart members={state.members.get()} />
   </div>;
 
 });

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { renderToString } from 'react-dom/server';
 import { ServerRouter, createServerRenderContext } from 'react-router';
 
-import { fetch } from './models/Http';
+import { server as serverTransport } from './models/Transport';
 import State from './models/State';
 import { BaseConstructor } from './components/Base';
 import DynamicBase from './components/DynamicBase';
@@ -12,7 +12,7 @@ import AmpBase from './components/AmpBase';
 // Middleware for serving resources of a single type.
 const renderOnMatch = (Base: BaseConstructor) => async function (context, next) {
 
-  const state = new State(fetch);
+  const state = new State(serverTransport);
 
   const renderContext = createServerRenderContext();
 

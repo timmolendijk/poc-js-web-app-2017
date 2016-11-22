@@ -3,11 +3,11 @@ import { render } from 'react-dom';
 import { BrowserRouter } from 'react-router';
 import { ClientStyled } from 'style';
 
-import { jsonp } from './models/Http';
+import { client as clientTransport } from './models/Transport';
 import State from './models/State';
 import DynamicBase from './components/DynamicBase';
 
-const state = new State(jsonp, (window as any).__STATE__);
+const state = new State(clientTransport, (window as any).__STATE__);
 
 render(
   <ClientStyled>

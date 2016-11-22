@@ -1,10 +1,18 @@
-import { Http } from './Http';
-import { MemberCollection } from './Member';
+import { pick } from 'lodash';
+
+import { Transport } from './Transport';
+import { SerializedMemberCollection, MemberCollection } from './Member';
+
+interface SerializedState {
+  members: SerializedMemberCollection; 
+}
 
 export default class State {
 
-  constructor(http: Http, data: any = { }) {
-    this.members = new MemberCollection(http, data.members);
+  constructor(public readonly transport: Transport, data?: SerializedState) {
+    this.transport = transport;
+
+    this.members = new MemberCollection(this, data && data.members);
   }
 
   readonly members: MemberCollection;
@@ -18,6 +26,14 @@ export default class State {
       return;
     
     return Promise.all(busy);
+  }
+
+  getInstance(Model, data) {
+    return new Model(data);
+  }
+
+  toJSON() {
+    return pick(this, ['members']);
   }
 
 }
