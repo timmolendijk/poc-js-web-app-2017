@@ -1,12 +1,6 @@
-import { Awaitable, isAwaitable } from './Awaitable';
+import { Awaitable, isAwaitable, awaitEmptyCallStack } from './Awaitable';
 
 export interface StateFields {}
-
-async function awaitEmptyCallStack(promises) {
-  const result = await Promise.all(promises);
-  await new Promise(setTimeout);
-  return result;
-}
 
 export class State implements Awaitable {
 

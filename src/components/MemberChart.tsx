@@ -6,38 +6,41 @@ import { observable } from 'mobx';
 import { inject } from 'mobx-react';
 import { Style } from 'style';
 
+import { Awaitable, isAwaitable, awaitEmptyCallStack } from '../models/Awaitable';
 import { State, StateFields } from '../models/State'
 import Transport from '../models/Transport';
-import { Member, MemberTransport } from '../models/Member';
+import { ModelRegistry } from '../models/Model';
+import { Member, MemberData, MemberTransport } from '../models/Member';
 import MemberCard from './MemberCard';
 
 declare module '../models/State' {
   interface StateFields {
-    members?: Array<Member>;
-    memberTransport?: Transport<Member>;
+    MemberChart?: MemberChartState
   }
 }
 
-export default inject(({ state }: { state: State }) => {
+interface MemberChartData {
+  members?: ReadonlyArray<MemberData>;
+}
 
-  const { models } = state.fields;
+class MemberChartState implements Awaitable {
 
-  // TODO(tim): These should be neatly represented in their own component-level
-  // class, which can then use `@observable` and hold async functions very
-  // elegantly.
-  const { members } = state.add('members', (data = []) =>
-    observable(data.map(models.instance(Member)))
-  );
-  const { memberTransport } = state.add('memberTransport', () =>
-    new MemberTransport(models.instance(Member))
-  );
+  constructor({ members = [] }: MemberChartData = { }, models: ModelRegistry) {
+    // TODO(tim): This verbosity is caused by our currying magic. Alternative of
+    // introducing a different method for this use case might be preferable.
+    this.members = members.map(models.instance(Member) as (data) => Member);
+    this.transport = new MemberTransport(models.instance(Member));
+    this.load();
+  }
 
-  !async function () {
-    // TODO(tim): This code should not be inside the observed function.
-    if (process.env.RUN_ENV === 'server' && members.length || members.length >= 200)
+  @observable members: Array<Member>;
+  private readonly transport: MemberTransport;
+
+  private async load() {
+    if (process.env.RUN_ENV === 'server' && this.members.length)
       return;
     
-    const page = memberTransport.list();
+    const page = this.transport.list();
     let instances;
     try {
       instances = await page;
@@ -45,12 +48,34 @@ export default inject(({ state }: { state: State }) => {
       return;
     }
 
-    members.splice(0, members.length, ...instances);
-  }();
+    this.members = instances;
+  }
 
-  // TODO(tim): This is really the only piece of code that should be inside this
-  // (observing) inject mapper.
-  return { members: (members as any).peek() };
+  get await() {
+    const awaiting = Object.keys(this)
+      .map(key => this[key])
+      .filter(isAwaitable)
+      .map(value => value.await)
+      .filter(Boolean);
+    
+    if (awaiting.length === 0)
+      return;
+    
+    // Let all operations on call stack execute before reporting state as
+    // stable.
+    return awaitEmptyCallStack(awaiting);
+  }
+
+}
+
+export default inject(({ state }: { state: State }) => {
+
+  state.add('MemberChart', data => new MemberChartState(data, state.fields.models));
+
+  return {
+    // TODO(tim): Silly type assertion.
+    members: (state.fields.MemberChart.members as any).peek()
+  };
 
 })(function MemberChart({ members }: { members: ReadonlyArray<Member> }) {
 
