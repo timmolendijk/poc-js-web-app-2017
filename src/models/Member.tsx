@@ -1,17 +1,102 @@
-import { observable, when, action } from 'mobx';
-import { pick } from 'lodash';
+import * as url from 'url';
+import * as fetch from 'isomorphic-fetch';
 
-import State from './State';
+import * as jsonp from 'jsonp';
+import * as promisify from 'es6-promisify';
+const jsonpAsync = promisify(jsonp);
 
-export interface SerializedMember {
+import Model from './Model';
+import Awaitable from './Awaitable';
+import Transport from './Transport';
+
+export interface MemberData {
   id: number;
   name: string;
   image: string;
 }
 
-export class Member implements SerializedMember {
+const endpoint = url.format({
+  protocol: 'https',
+  hostname: 'api.meetup.com',
+  pathname: 'AmsterdamJS/members',
+  query: {
+    desc: 'false',
+    'photo-host': 'public',
+    page: 200,
+    sig_id: '5314113',
+    order: 'joined',
+    sig: '40ce35726d361ace595406080daf3ac36826bf05'
+  }
+});
 
-  constructor(data?: SerializedMember) {
+const transports: {
+  [env: string]: Transport<MemberData>;
+} = { };
+
+function fromSourceFormat(data: any): MemberData {
+  return {
+    id: data.id,
+    name: data.name,
+    image: data.photo ? data.photo.thumb_link : null
+  };
+}
+
+transports['server'] = {
+
+  async list() {
+    const response = await fetch(endpoint);
+    if (!response.ok)
+      throw new Error(`${response.status}: ${response.statusText}`);
+    return (await response.json()).slice(0, 5).map(fromSourceFormat);
+  }
+
+};
+
+transports['client'] = {
+
+  async list() {
+    const response = await jsonpAsync(endpoint, {
+      param: 'callback',
+      name: 'cb'
+    });
+    if (response.data.errors && response.data.errors.length)
+      throw new Error(`${response.data.errors[0].code}: ${response.data.errors[0].message}`);
+    return response.data.map(fromSourceFormat);
+  }
+
+};
+
+export class MemberTransport implements Transport<Member>, Awaitable {
+
+    constructor(private readonly mapResult: (data: MemberData) => Member) {}
+
+    private readonly transport = transports[process.env.RUN_ENV];
+    private readonly awaiting = new Set<Promise<any>>();
+
+    async list() {
+      const promise = this.transport.list();
+      this.awaiting.add(promise);
+      const response = await promise;
+      this.awaiting.delete(promise);
+      return response.map(this.mapResult);
+    }
+
+    get await() {
+      if (this.awaiting.size === 0)
+        return;
+      
+      return Promise.all([...this.awaiting]);
+    }
+
+    toJSON() {
+      return;
+    }
+
+}
+
+export class Member implements Model, MemberData {
+
+  constructor(data?: MemberData) {
     Object.keys(data).forEach(key => {
       this[key] = data[key];
     });
@@ -22,103 +107,7 @@ export class Member implements SerializedMember {
   readonly image;
 
   get profile(): string {
-    return `http://www.meetup.com/AmsterdamJS/members/${this.id}/`;
-  }
-
-}
-
-export interface SerializedMemberCollection {
-  data: SerializedMember[];
-  loader: { cursor: string };
-}
-
-interface CollectionLoader<M> extends IterableIterator<Promise<ReadonlyArray<M>>> {
-  cursor: string;
-  isVirgin: boolean;
-} 
-
-export class MemberCollection {
-
-  constructor(private readonly state: State, data?: SerializedMemberCollection) {
-    if (data && data.data)
-      this.data = data.data.map(d => this.state.getInstance(Member, d));
-    this.loader = this.state.transport.list(Member, data && data.loader);
-  }
-
-  @observable private data: Member[] = [];
-  private loader: CollectionLoader<Member>;
-  
-  @observable private pending: number = 0;
-
-  get stable(): Promise<any> {
-    if (this.pending === 0)
-      return;
-    
-    return new Promise(resolve =>
-      when(
-        () => this.pending === 0,
-        resolve
-      )
-    );
-  }
-
-  get(): Member[] {
-    if (this.loader.cursor)
-      if (this.loader.isVirgin)
-        this.load();
-      else if (this.allowResumeLoad)
-        this.resumeLoad();
-
-    return this.data;
-  }
-
-  private async load() {
-    // TODO(tim): Do not blindly assume that this first chunk exists.
-    const chunk = this.loader.next().value;
-    await this.loadChunk(chunk);
-  }
-
-  allowResumeLoad: boolean = false;
-
-  private async resumeLoad() {
-    this.allowResumeLoad = false;
-
-    for (const chunk of this.loader) {
-      await this.loadChunk(chunk);
-    }
-  }
-
-  private async loadChunk(chunk) {
-    // TODO(tim): Too late?
-    this.startLoadChunk();
-    let data;
-    try {
-      data = await chunk;
-    } catch (err) {
-      // TODO(tim): This will cause an infinite iteration of load attempts.
-      this.endLoadChunk(null);
-    }
-    this.endLoadChunk(data.map(d => this.state.getInstance(Member, {
-      id: d.id,
-      name: d.name,
-      image: d.photo ? d.photo.thumb_link : null
-    })));
-  }
-
-  @action private startLoadChunk() {
-    this.pending++;
-  }
-
-  @action private endLoadChunk(data) {
-    this.pending--;
-    if (data)
-      this.data.push(...data);
-    else
-      this.data = []; 
-  }
-
-  toJSON() {
-    return pick(this, ['data', 'loader']);
+    return `https://www.meetup.com/AmsterdamJS/members/${this.id}/`;
   }
 
 }

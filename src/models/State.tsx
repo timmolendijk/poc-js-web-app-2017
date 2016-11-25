@@ -1,43 +1,48 @@
-import { pick } from 'lodash';
+import { Awaitable, isAwaitable } from './Awaitable';
 
-import { Transport } from './Transport';
-import { SerializedMemberCollection, MemberCollection } from './Member';
+export interface StateFields {}
 
-interface SerializedState {
-  members: SerializedMemberCollection; 
+async function awaitEmptyCallStack(promises) {
+  const result = await Promise.all(promises);
+  await new Promise(setTimeout);
+  return result;
 }
 
-export default class State {
+export class State implements Awaitable {
 
-  constructor(public readonly transport: Transport, data?: SerializedState) {
-    this.transport = transport;
-
-    this.members = new MemberCollection(this, data && data.members);
+  constructor(data?) {
+    this.data = data || { };
   }
 
-  readonly members: MemberCollection;
+  private readonly data: { [raw: string]: any };
 
-  get stable(): Promise<any> {
-    const busy = [
-      this.members.stable
-    ].filter(Boolean);
+  readonly fields: StateFields = { };
+
+  add(key: string, value: Function): StateFields {
+    if (!(key in this.fields))
+      this.fields[key] = value(this.data[key]);
+    return this.fields;
+  }
+
+  get await() {
+    const awaiting = Object.keys(this.fields)
+      .map(key => this.fields[key])
+      .filter(isAwaitable)
+      .map(value => value.await)
+      .filter(Boolean);
     
-    if (busy.length === 0)
+    if (awaiting.length === 0)
       return;
     
-    return Promise.all(busy);
-  }
-
-  set allowResumeLoad(value: boolean) {
-    this.members.allowResumeLoad = value;
-  }
-
-  getInstance(Model, data) {
-    return new Model(data);
+    // Let all operations on call stack execute before reporting state as
+    // stable.
+    return awaitEmptyCallStack(awaiting);
   }
 
   toJSON() {
-    return pick(this, ['members']);
+    return this.fields;
   }
 
 }
+
+export default State;

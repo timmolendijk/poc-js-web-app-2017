@@ -2,6 +2,9 @@ var path = require('path');
 var querystring = require('querystring');
 var webpack = require('webpack');
 
+process.env.NODE_ENV = 'development';
+process.env.RUN_ENV = 'client';
+
 module.exports = {
   devtool: 'eval',
   entry: [
@@ -16,6 +19,9 @@ module.exports = {
   resolve: {
     extensions: ['', '.js', '.ts', '.tsx']
   },
+  plugins: [
+    new webpack.EnvironmentPlugin(['NODE_ENV', 'RUN_ENV'])
+  ],
   module: {
     loaders: [{
       test: /\.png$/i,

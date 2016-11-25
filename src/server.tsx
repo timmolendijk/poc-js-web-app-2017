@@ -4,7 +4,6 @@ import { renderToString } from 'react-dom/server';
 import { useStaticRendering } from 'mobx-react';
 import { ServerRouter, createServerRenderContext } from 'react-router';
 
-import { server as serverTransport } from './models/Transport';
 import State from './models/State';
 import { BaseConstructor } from './components/Base';
 import DynamicBase from './components/DynamicBase';
@@ -15,7 +14,7 @@ useStaticRendering(true);
 // Middleware for serving resources of a single type.
 const renderOnMatch = (Base: BaseConstructor) => async function (context, next) {
 
-  const state = new State(serverTransport);
+  const state = new State();
 
   const renderContext = createServerRenderContext();
 
@@ -29,10 +28,10 @@ const renderOnMatch = (Base: BaseConstructor) => async function (context, next) 
   while (true) {
     renderCount++;
     html = Base.renderToDocument(renderComponent, state);
-    const stable = state.stable;
-    if (!(stable instanceof Promise))
+    const awaiting = state.await;
+    if (!(awaiting instanceof Promise))
       break;
-    await stable;
+    await awaiting;
   }
 
   const { redirect, missed } = renderContext.getResult();
