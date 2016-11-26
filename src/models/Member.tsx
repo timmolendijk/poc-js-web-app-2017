@@ -6,7 +6,7 @@ import * as promisify from 'es6-promisify';
 const jsonpAsync = promisify(jsonp);
 
 import Model from './Model';
-import Awaitable from './Awaitable';
+import { Awaitable, awaitAll } from './Awaitable';
 import Transport from './Transport';
 
 export interface MemberData {
@@ -82,10 +82,7 @@ export class MemberTransport implements Transport<Member>, Awaitable {
     }
 
     get await() {
-      if (this.awaiting.size === 0)
-        return;
-      
-      return Promise.all([...this.awaiting]);
+      return awaitAll([...this.awaiting]);
     }
 
     toJSON() {
