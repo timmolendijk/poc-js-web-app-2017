@@ -1,26 +1,37 @@
 import { Awaitable, isAwaitable, awaitEmptyCallStack } from './Awaitable';
 
-export interface StateFields {}
+export interface Stores {
+  add<T>(key: string, define: (data) => T): T;
+}
+
+class StateStores implements Stores {
+
+  constructor(data?) {
+    data = data || { };
+    this.add = (key, define) => {
+      if (!(key in this))
+        this[key] = define(data[key]);
+      return this[key];
+    };
+  }
+
+  add: <T>(key: string, define: (data) => T) => T;
+
+}
 
 export class State implements Awaitable {
 
   constructor(data?) {
-    this.data = data || { };
+    // Separate stores from the state to allow other components to augment the
+    // `Stores` interface and be certain that no name clashes will occur.
+    this.stores = new StateStores(data);
   }
 
-  private readonly data: { [raw: string]: any };
-
-  readonly fields: StateFields = { };
-
-  add(key: string, value: Function): StateFields {
-    if (!(key in this.fields))
-      this.fields[key] = value(this.data[key]);
-    return this.fields;
-  }
+  readonly stores: StateStores;
 
   get await() {
-    const awaiting = Object.keys(this.fields)
-      .map(key => this.fields[key])
+    const awaiting = Object.keys(this.stores)
+      .map(key => this.stores[key])
       .filter(isAwaitable)
       .map(value => value.await)
       .filter(Boolean);
@@ -34,7 +45,7 @@ export class State implements Awaitable {
   }
 
   toJSON() {
-    return this.fields;
+    return this.stores;
   }
 
 }

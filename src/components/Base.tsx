@@ -4,11 +4,11 @@ import * as React from 'react';
 import { Provider } from 'mobx-react';
 import { Style } from 'style';
 
-import { State, StateFields } from '../models/State'
+import { State, Stores } from '../models/State'
 import { ModelRegistry } from '../models/Model';
 
 declare module '../models/State' {
-  interface StateFields {
+  interface Stores {
     models?: ModelRegistry;
   }
 }
@@ -28,10 +28,10 @@ export default function Base({ state, children }: Props) {
   // May look dubious to do this upon every render, but as far as I can see in
   // practice this is just fine because this component will render exactly once
   // per instantiation.
-  state.add('models', data => new ModelRegistry(data));
+  state.stores.add('models', data => new ModelRegistry(data));
 
   return <div>
     <Style>{styles}</Style>
-    <Provider state={state}>{children}</Provider>
+    <Provider stores={state.stores}>{children}</Provider>
   </div>;
 }

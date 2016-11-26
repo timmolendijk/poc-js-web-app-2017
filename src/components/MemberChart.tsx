@@ -7,37 +7,37 @@ import { inject } from 'mobx-react';
 import { Style } from 'style';
 
 import { Awaitable, isAwaitable, awaitEmptyCallStack } from '../models/Awaitable';
-import { State, StateFields } from '../models/State'
+import { Stores } from '../models/State'
 import Transport from '../models/Transport';
 import { ModelRegistry } from '../models/Model';
 import { Member, MemberData, MemberTransport } from '../models/Member';
 import MemberCard from './MemberCard';
 
 declare module '../models/State' {
-  interface StateFields {
-    MemberChart?: MemberChartState
+  export interface Stores {
+    members?: MembersStore
   }
 }
 
-interface MemberChartData {
-  members?: ReadonlyArray<MemberData>;
+interface MembersData {
+  all?: ReadonlyArray<MemberData>;
 }
 
-class MemberChartState implements Awaitable {
+class MembersStore implements Awaitable {
 
-  constructor({ members = [] }: MemberChartData = { }, models: ModelRegistry) {
+  constructor({ all = [] }: MembersData = { }, models: ModelRegistry) {
     // TODO(tim): This verbosity is caused by our currying magic. Alternative of
     // introducing a different method for this use case might be preferable.
-    this.members = members.map(models.instance(Member) as (data) => Member);
+    this.all = all.map(models.instance(Member) as (data) => Member);
     this.transport = new MemberTransport(models.instance(Member));
     this.load();
   }
 
-  @observable members: Array<Member>;
+  @observable all: Array<Member>;
   private readonly transport: MemberTransport;
 
   private async load() {
-    if (process.env.RUN_ENV === 'server' && this.members.length)
+    if (process.env.RUN_ENV === 'server' && this.all.length)
       return;
     
     const page = this.transport.list();
@@ -48,7 +48,7 @@ class MemberChartState implements Awaitable {
       return;
     }
 
-    this.members = instances;
+    this.all = instances;
   }
 
   get await() {
@@ -68,13 +68,13 @@ class MemberChartState implements Awaitable {
 
 }
 
-export default inject(({ state }: { state: State }) => {
+export default inject(({ stores }: { stores: Stores }) => {
 
-  state.add('MemberChart', data => new MemberChartState(data, state.fields.models));
+  const members = stores.add('members', data => new MembersStore(data, stores.models));
 
   return {
     // TODO(tim): Silly type assertion.
-    members: (state.fields.MemberChart.members as any).peek()
+    members: (members.all as any).peek()
   };
 
 })(function MemberChart({ members }: { members: ReadonlyArray<Member> }) {
