@@ -44,7 +44,10 @@ class MembersStore implements Awaitable {
   }
 
   private async load() {
-    const page = this.transport.list();
+    if (this.members.length >= 200)
+      return;
+    
+    const page = this.transport.list({ max: 200 });
     let instances;
     try {
       instances = await page;

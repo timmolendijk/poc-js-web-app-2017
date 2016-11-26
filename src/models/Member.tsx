@@ -43,25 +43,25 @@ function fromSourceFormat(data: any): MemberData {
 
 transports['server'] = {
 
-  async list() {
+  async list({ max } = { }) {
     const response = await fetch(endpoint);
     if (!response.ok)
       throw new Error(`${response.status}: ${response.statusText}`);
-    return (await response.json()).slice(0, 5).map(fromSourceFormat);
+    return (await response.json()).slice(0, Math.min(5, max)).map(fromSourceFormat);
   }
 
 };
 
 transports['client'] = {
 
-  async list() {
+  async list({ max } = { }) {
     const response = await jsonpAsync(endpoint, {
       param: 'callback',
       name: 'cb'
     });
     if (response.data.errors && response.data.errors.length)
       throw new Error(`${response.data.errors[0].code}: ${response.data.errors[0].message}`);
-    return response.data.map(fromSourceFormat);
+    return response.data.slice(0, max).map(fromSourceFormat);
   }
 
 };
@@ -73,8 +73,8 @@ export class MemberTransport implements Transport<Member>, Awaitable {
     private readonly transport = transports[process.env.RUN_ENV];
     private readonly awaiting = new Set<Promise<any>>();
 
-    async list() {
-      const promise = this.transport.list();
+    async list(opts) {
+      const promise = this.transport.list(opts);
       this.awaiting.add(promise);
       const response = await promise;
       this.awaiting.delete(promise);

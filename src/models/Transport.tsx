@@ -1,5 +1,5 @@
 export interface Transport<M> {
-  list(): Promise<ReadonlyArray<M>>;
+  list(opts?: { [opt: string]: any }): Promise<ReadonlyArray<M>>;
 }
 
 export default Transport;
