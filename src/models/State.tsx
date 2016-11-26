@@ -1,4 +1,4 @@
-import { Awaitable, isAwaitable, awaitEmptyCallStack } from './Awaitable';
+import { Awaitable, awaitProps } from './Awaitable';
 
 export interface Stores {
   add<T>(key: string, define: (data) => T): T;
@@ -30,18 +30,7 @@ export class State implements Awaitable {
   readonly stores: StateStores;
 
   get await() {
-    const awaiting = Object.keys(this.stores)
-      .map(key => this.stores[key])
-      .filter(isAwaitable)
-      .map(value => value.await)
-      .filter(Boolean);
-    
-    if (awaiting.length === 0)
-      return;
-    
-    // Let all operations on call stack execute before reporting state as
-    // stable.
-    return awaitEmptyCallStack(awaiting);
+    return awaitProps(this.stores);
   }
 
   toJSON() {

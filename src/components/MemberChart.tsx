@@ -6,7 +6,7 @@ import { observable } from 'mobx';
 import { inject } from 'mobx-react';
 import { Style } from 'style';
 
-import { Awaitable, isAwaitable, awaitEmptyCallStack } from '../models/Awaitable';
+import { Awaitable, awaitProps } from '../models/Awaitable';
 import { Stores } from '../models/State'
 import Transport from '../models/Transport';
 import { ModelRegistry } from '../models/Model';
@@ -56,18 +56,7 @@ class MembersStore implements Awaitable {
   }
 
   get await() {
-    const awaiting = Object.keys(this)
-      .map(key => this[key])
-      .filter(isAwaitable)
-      .map(value => value.await)
-      .filter(Boolean);
-    
-    if (awaiting.length === 0)
-      return;
-    
-    // Let all operations on call stack execute before reporting state as
-    // stable.
-    return awaitEmptyCallStack(awaiting);
+    return awaitProps(this);
   }
 
 }
