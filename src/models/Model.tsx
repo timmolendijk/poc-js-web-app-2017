@@ -10,7 +10,7 @@ export class ModelRegistry {
 
   readonly instance = curry(<M extends Model>(Type, data): M =>
     new Type(data)
-  )
+  );
 
 }
 

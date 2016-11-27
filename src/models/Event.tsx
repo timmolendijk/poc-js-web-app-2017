@@ -9,35 +9,27 @@ import Model from './Model';
 import { Awaitable, awaitAll } from './Awaitable';
 import Transport from './Transport';
 
-export interface MemberData {
+type Url = string;
+
+export interface EventData {
   id: number;
   name: string;
-  image: string;
+  pageUrl: Url;
+  venueName: string;
 }
 
-const endpoint = url.format({
-  protocol: 'https',
-  hostname: 'api.meetup.com',
-  pathname: 'AmsterdamJS/members',
-  query: {
-    desc: 'false',
-    'photo-host': 'public',
-    page: 200,
-    sig_id: '5314113',
-    order: 'joined',
-    sig: '40ce35726d361ace595406080daf3ac36826bf05'
-  }
-});
+const endpoint = "https://api.meetup.com/AmsterdamJS/events?photo-host=public&page=200&sig_id=5314113&status=past%2Cupcoming&sig=90911f77f51b580ae5e554666a2e39b104677c76";
 
 const transports: {
-  [env: string]: Transport<MemberData>;
+  [env: string]: Transport<EventData>;
 } = {};
 
-function fromSourceFormat(data: any): MemberData {
+function fromSourceFormat(data: any): EventData {
   return {
     id: data.id,
     name: data.name,
-    image: data.photo ? data.photo.thumb_link : null
+    pageUrl: data.link,
+    venueName: data.venue.name
   };
 }
 
@@ -66,9 +58,9 @@ transports['client'] = {
 
 };
 
-export class MemberTransport implements Transport<Member>, Awaitable {
+export class EventTransport implements Transport<Event>, Awaitable {
 
-    constructor(private readonly mapResult: (data: MemberData) => Member) {}
+    constructor(private readonly mapResult: (data: EventData) => Event) {}
 
     private readonly transport = transports[process.env.RUN_ENV];
     private readonly awaiting = new Set<Promise<any>>();
@@ -91,22 +83,17 @@ export class MemberTransport implements Transport<Member>, Awaitable {
 
 }
 
-export class Member implements Model, MemberData {
+export class Event implements Model, EventData {
 
-  constructor(data?: MemberData) {
+  constructor(data?: EventData) {
     Object.assign(this, data);
   }
 
   readonly id;
   readonly name;
-  // TODO(tim): Rename to `imageUrl`?
-  readonly image;
-
-  get profile(): string {
-    return `https://www.meetup.com/AmsterdamJS/members/${this.id}/`;
-  }
+  readonly pageUrl;
+  readonly venueName;
 
 }
 
-// TODO(tim): Useful? Or confusing?
-export default Member;
+export default Event;

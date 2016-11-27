@@ -1,0 +1,11 @@
+.EventList ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.EventList li {
+  background-color: white;
+  box-shadow: 0 5px 10px rgba(150, 150, 150, .5);
+  padding: .5rem 1rem;
+  margin-top: 1rem;
+}
