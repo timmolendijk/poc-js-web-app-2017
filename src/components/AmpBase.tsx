@@ -10,7 +10,7 @@ import Page from './Page';
 import Event from './Event';
 import NotFound from './NotFound';
 
-export default class AmpBase extends React.Component<{ state: State }, { }> {
+export default class AmpBase extends React.Component<{ state: State }, {}> {
 
   render() {
     const ampStandardLib = {

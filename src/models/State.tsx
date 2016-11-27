@@ -7,7 +7,7 @@ export interface Stores {
 class StateStores implements Stores {
 
   constructor(data?) {
-    data = data || { };
+    data = data || {};
     this.add = (key, define) => {
       if (!(key in this))
         this[key] = define(data[key]);

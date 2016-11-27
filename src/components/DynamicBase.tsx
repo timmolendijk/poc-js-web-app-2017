@@ -10,7 +10,7 @@ import Page from './Page';
 import Home from './Home';
 import NotFound from './NotFound';
 
-export default class DynamicBase extends React.Component<{ state: State }, { }> {
+export default class DynamicBase extends React.Component<{ state: State }, {}> {
 
   render() {
     return <Base state={this.props.state}>

@@ -4,15 +4,15 @@ declare module "react-router" {
 
   namespace ReactRouter {
 
-    class BrowserRouter extends React.Component<any, { }> {}
+    class BrowserRouter extends React.Component<any, {}> {}
 
     function createServerRenderContext();
 
-    class ServerRouter extends React.Component<any, { }> {}
+    class ServerRouter extends React.Component<any, {}> {}
 
-    class Match extends React.Component<any, { }> {}
+    class Match extends React.Component<any, {}> {}
 
-    class Miss extends React.Component<any, { }> {}
+    class Miss extends React.Component<any, {}> {}
 
   }
 

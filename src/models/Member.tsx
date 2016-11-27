@@ -31,7 +31,7 @@ const endpoint = url.format({
 
 const transports: {
   [env: string]: Transport<MemberData>;
-} = { };
+} = {};
 
 function fromSourceFormat(data: any): MemberData {
   return {
@@ -43,7 +43,7 @@ function fromSourceFormat(data: any): MemberData {
 
 transports['server'] = {
 
-  async list({ max } = { }) {
+  async list({ max } = {}) {
     const response = await fetch(endpoint);
     if (!response.ok)
       throw new Error(`${response.status}: ${response.statusText}`);
@@ -54,7 +54,7 @@ transports['server'] = {
 
 transports['client'] = {
 
-  async list({ max } = { }) {
+  async list({ max } = {}) {
     const response = await jsonpAsync(endpoint, {
       param: 'callback',
       name: 'cb'

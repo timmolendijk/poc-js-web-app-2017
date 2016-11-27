@@ -19,7 +19,7 @@ interface Props {
 }
 
 export interface BaseConstructor {
-  new (props: Props): React.Component<Props, { }>;
+  new (props: Props): React.Component<Props, {}>;
   renderToDocument(component, state): string;
 }
 
