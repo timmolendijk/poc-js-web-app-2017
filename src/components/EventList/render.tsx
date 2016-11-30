@@ -19,7 +19,8 @@ export function EventList({ events }: Props) {
     <ul>
       {events.map(event =>
         <li key={event.id}>
-          <a href={event.pageUrl} target="_blank">{event.name}</a> in {event.venueName}
+          <p>{event.startTime.format("dddd, MMMM Do YYYY, h:mm:ss a")}</p>
+          <p><a href={event.pageUrl} target="_blank">{event.name}</a> at {event.venueName}</p>
         </li>
       )}
     </ul>

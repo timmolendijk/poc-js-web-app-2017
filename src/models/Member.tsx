@@ -5,7 +5,7 @@ import * as jsonp from 'jsonp';
 import * as promisify from 'es6-promisify';
 const jsonpAsync = promisify(jsonp);
 
-import Model from './Model';
+import { Normalizable, registerType } from './Normalizable';
 import { Awaitable, awaitAll } from './Awaitable';
 import Transport from './Transport';
 
@@ -68,30 +68,30 @@ transports['client'] = {
 
 export class MemberTransport implements Transport<Member>, Awaitable {
 
-    constructor(private readonly mapResult: (data: MemberData) => Member) {}
+  constructor(private readonly mapResult: (data: MemberData) => Member) {}
 
-    private readonly transport = transports[process.env.RUN_ENV];
-    private readonly awaiting = new Set<Promise<any>>();
+  private readonly transport = transports[process.env.RUN_ENV];
+  private readonly awaiting = new Set<Promise<any>>();
 
-    async list(opts) {
-      const promise = this.transport.list(opts);
-      this.awaiting.add(promise);
-      const response = await promise;
-      this.awaiting.delete(promise);
-      return response.map(this.mapResult);
-    }
+  async list(opts) {
+    const promise = this.transport.list(opts);
+    this.awaiting.add(promise);
+    const response = await promise;
+    this.awaiting.delete(promise);
+    return response.map(this.mapResult);
+  }
 
-    get await() {
-      return awaitAll([...this.awaiting]);
-    }
+  get await() {
+    return awaitAll([...this.awaiting]);
+  }
 
-    toJSON() {
-      return;
-    }
+  toJSON() {
+    return;
+  }
 
 }
 
-export class Member implements Model, MemberData {
+export class Member implements Normalizable {
 
   constructor(data?: MemberData) {
     Object.assign(this, data);
@@ -107,6 +107,8 @@ export class Member implements Model, MemberData {
   }
 
 }
+
+registerType(Member.name, Member);
 
 // TODO(tim): Useful? Or confusing?
 export default Member;

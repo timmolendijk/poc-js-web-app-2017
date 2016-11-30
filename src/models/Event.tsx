@@ -1,24 +1,23 @@
-import * as url from 'url';
 import * as fetch from 'isomorphic-fetch';
+import * as moment from 'moment';
 
 import * as jsonp from 'jsonp';
 import * as promisify from 'es6-promisify';
 const jsonpAsync = promisify(jsonp);
 
-import Model from './Model';
+import { Normalizable, registerType } from './Normalizable';
 import { Awaitable, awaitAll } from './Awaitable';
 import Transport from './Transport';
-
-type Url = string;
 
 export interface EventData {
   id: number;
   name: string;
-  pageUrl: Url;
+  pageUrl: string;
   venueName: string;
+  startTime: number;
 }
 
-const endpoint = "https://api.meetup.com/AmsterdamJS/events?photo-host=public&page=200&sig_id=5314113&status=past%2Cupcoming&sig=90911f77f51b580ae5e554666a2e39b104677c76";
+const endpoint = "https://api.meetup.com/AmsterdamJS/events?desc=false&photo-host=public&page=200&sig_id=5314113&status=past%2Cupcoming&sig=3710175683c3046e8fe2a0d1bb453aac3e935866";
 
 const transports: {
   [env: string]: Transport<EventData>;
@@ -29,71 +28,87 @@ function fromSourceFormat(data: any): EventData {
     id: data.id,
     name: data.name,
     pageUrl: data.link,
-    venueName: data.venue.name
+    venueName: data.venue.name,
+    startTime: data.time
   };
 }
 
 transports['server'] = {
 
-  async list({ max } = {}) {
+  async list() {
     const response = await fetch(endpoint);
     if (!response.ok)
       throw new Error(`${response.status}: ${response.statusText}`);
-    return (await response.json()).slice(0, Math.min(5, max)).map(fromSourceFormat);
+    return (await response.json()).map(fromSourceFormat);
   }
 
 };
 
 transports['client'] = {
 
-  async list({ max } = {}) {
+  async list() {
     const response = await jsonpAsync(endpoint, {
       param: 'callback',
       name: 'cb'
     });
     if (response.data.errors && response.data.errors.length)
       throw new Error(`${response.data.errors[0].code}: ${response.data.errors[0].message}`);
-    return response.data.slice(0, max).map(fromSourceFormat);
+    return response.data.map(fromSourceFormat);
   }
 
 };
 
 export class EventTransport implements Transport<Event>, Awaitable {
 
-    constructor(private readonly mapResult: (data: EventData) => Event) {}
+  constructor(private readonly mapResult: (data: EventData) => Event) {}
 
-    private readonly transport = transports[process.env.RUN_ENV];
-    private readonly awaiting = new Set<Promise<any>>();
+  private readonly transport = transports[process.env.RUN_ENV];
+  private readonly awaiting = new Set<Promise<any>>();
 
-    async list(opts) {
-      const promise = this.transport.list(opts);
-      this.awaiting.add(promise);
-      const response = await promise;
-      this.awaiting.delete(promise);
-      return response.map(this.mapResult);
-    }
-
-    get await() {
-      return awaitAll([...this.awaiting]);
-    }
-
-    toJSON() {
-      return;
-    }
-
-}
-
-export class Event implements Model, EventData {
-
-  constructor(data?: EventData) {
-    Object.assign(this, data);
+  async list(opts?) {
+    const promise = this.transport.list(opts);
+    this.awaiting.add(promise);
+    const response = await promise;
+    this.awaiting.delete(promise);
+    return response.map(this.mapResult);
   }
 
-  readonly id;
-  readonly name;
-  readonly pageUrl;
-  readonly venueName;
+  get await() {
+    return awaitAll([...this.awaiting]);
+  }
+
+  toJSON() {
+    return;
+  }
 
 }
+
+export class Event implements Normalizable {
+
+  constructor(private readonly data: EventData) {}
+
+  get id() {
+    return this.data.id;
+  }
+  get name() {
+    return this.data.name;
+  }
+  get pageUrl() {
+    return this.data.pageUrl;
+  }
+  get venueName() {
+    return this.data.venueName;
+  }
+  get startTime() {
+    return moment(this.data.startTime);
+  }
+
+  toJSON() {
+    return this.data;
+  }
+
+}
+
+registerType(Event.name, Event);
 
 export default Event;

@@ -1,27 +1,21 @@
 import { observable } from 'mobx';
 
+import { Identity, Registry } from '../../models/Normalizable';
 import { Awaitable, awaitProps } from '../../models/Awaitable';
-import { ModelRegistry } from '../../models/Model';
-import { Event, EventData, EventTransport } from '../../models/Event';
-
-interface EventsStoreData {
-  events?: ReadonlyArray<EventData>;
-}
+import { Event, EventTransport } from '../../models/Event';
 
 export class EventsStore implements Awaitable {
 
-  constructor({ events = [] }: EventsStoreData = {}, models: ModelRegistry) {
-    // TODO(tim): This verbosity is caused by our currying magic. Alternative of
-    // introducing a different method for this use case might be preferable.
-    this.events = events.map(models.instance(Event) as (data) => Event);
-    this.transport = new EventTransport(models.instance(Event));
+  constructor({ events = [] }: { events?: ReadonlyArray<Identity> } = {}, models: Registry) {
+    this.events = events.map(identity => models.get<Event>(identity));
+    this.transport = new EventTransport(data => models.normalize(new Event(data)));
   }
 
   @observable private events: Array<Event>;
   private readonly transport: EventTransport;
 
   get(): ReadonlyArray<Event> {
-    if (process.env.RUN_ENV !== 'server' || !this.events.length)
+    if (!this.events.length)
       this.load();
 
     // TODO(tim): Can we get rid of this silly type assertion?
@@ -29,10 +23,7 @@ export class EventsStore implements Awaitable {
   }
 
   private async load() {
-    if (this.events.length > 5)
-      return;
-    
-    const page = this.transport.list({ max: 10 });
+    const page = this.transport.list();
     let instances;
     try {
       instances = await page;
@@ -40,7 +31,7 @@ export class EventsStore implements Awaitable {
       return;
     }
 
-    this.events = instances;
+    this.events = instances.reverse();
   }
 
   get await() {

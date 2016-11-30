@@ -1,20 +1,14 @@
 import { observable } from 'mobx';
 
+import { Identity, Registry } from '../../models/Normalizable';
 import { Awaitable, awaitProps } from '../../models/Awaitable';
-import { ModelRegistry } from '../../models/Model';
-import { Member, MemberData, MemberTransport } from '../../models/Member';
-
-interface MembersStoreData {
-  members?: ReadonlyArray<MemberData>;
-}
+import { Member, MemberTransport } from '../../models/Member';
 
 export class MembersStore implements Awaitable {
 
-  constructor({ members = [] }: MembersStoreData = {}, models: ModelRegistry) {
-    // TODO(tim): This verbosity is caused by our currying magic. Alternative of
-    // introducing a different method for this use case might be preferable.
-    this.members = members.map(models.instance(Member) as (data) => Member);
-    this.transport = new MemberTransport(models.instance(Member));
+  constructor({ members = [] }: { members?: ReadonlyArray<Identity> } = {}, models: Registry) {
+    this.members = members.map(identity => models.get<Member>(identity));
+    this.transport = new MemberTransport(data => models.normalize(new Member(data)));
   }
 
   @observable private members: Array<Member>;

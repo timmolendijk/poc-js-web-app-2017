@@ -14,6 +14,8 @@ declare module "react-router" {
 
     class Miss extends React.Component<any, {}> {}
 
+    class Link extends React.Component<any, {}> {}
+
   }
 
   export = ReactRouter;
