@@ -1,4 +1,4 @@
-import { observable } from 'mobx';
+import { observable, IObservableArray } from 'mobx';
 
 import { Identity, Registry } from '../../models/Normalizable';
 import { Awaitable, awaitProps } from '../../models/Awaitable';
@@ -18,8 +18,8 @@ export class MembersStore implements Awaitable {
     if (process.env.RUN_ENV !== 'server' || !this.members.length)
       this.load();
 
-    // TODO(tim): Can we get rid of this silly type assertion?
-    return (this.members as any).peek();
+    // TODO(tim): Is this the best place to do this type assertion?
+    return (this.members as IObservableArray<Member>).peek();
   }
 
   private async load() {
@@ -33,7 +33,6 @@ export class MembersStore implements Awaitable {
     } catch (err) {
       return;
     }
-
     this.members = instances;
   }
 

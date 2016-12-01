@@ -8,7 +8,7 @@ export class EventsStore implements Awaitable {
 
   constructor({ events = [] }: { events?: ReadonlyArray<Identity> } = {}, models: Registry) {
     this.events = events.map(identity => models.get<Event>(identity));
-    this.transport = new EventTransport(data => models.normalize(new Event(data)));
+    this.transport = new EventTransport(data => models.normalize(new Event({ data }, models)));
   }
 
   @observable private events: Array<Event>;

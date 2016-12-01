@@ -1,3 +1,4 @@
+import { observable, IObservableArray } from 'mobx';
 import * as fetch from 'isomorphic-fetch';
 import * as moment from 'moment';
 
@@ -5,9 +6,10 @@ import * as jsonp from 'jsonp';
 import * as promisify from 'es6-promisify';
 const jsonpAsync = promisify(jsonp);
 
-import { Normalizable, registerType } from './Normalizable';
-import { Awaitable, awaitAll } from './Awaitable';
+import { Normalizable, registerType, Identity, Registry } from './Normalizable';
+import { Awaitable, awaitAll, awaitProps } from './Awaitable';
 import Transport from './Transport';
+import { Member, MemberTransport } from './Member';
 
 export interface EventData {
   id: number;
@@ -83,9 +85,51 @@ export class EventTransport implements Transport<Event>, Awaitable {
 
 }
 
+// TODO(tim): How can we make this awaitable?
+class MemberCollection {
+
+  constructor(items: ReadonlyArray<Identity> = [], models: Registry) {
+    this.items = items.map(identity => models.get<Member>(identity));
+    this.transport = new MemberTransport(data => models.normalize(new Member(data)));
+  }
+
+  @observable private items: Array<Member>;
+  private readonly transport: MemberTransport;
+
+  get(): ReadonlyArray<Member> {
+    if (!this.items.length)
+      this.load();
+
+    // TODO(tim): Is this the best place to do this type assertion?
+    return (this.items as IObservableArray<Member>).peek();
+  }
+
+  private async load() {
+    const page = this.transport.list({ max: 200 });
+    let instances;
+    try {
+      instances = await page;
+    } catch (err) {
+      return;
+    }
+    this.items = instances;
+  }
+
+  toJSON() {
+    return [...this.items];
+  }
+
+}
+
 export class Event implements Normalizable {
 
-  constructor(private readonly data: EventData) {}
+  constructor({ data, members = [] }: { data: EventData, members?: ReadonlyArray<Identity> }, models: Registry) {
+    this.data = data;
+    this.members = new MemberCollection(members, models);
+  }
+
+  private readonly data: EventData;
+  readonly members: MemberCollection;
 
   get id() {
     return this.data.id;
@@ -101,10 +145,6 @@ export class Event implements Normalizable {
   }
   get startTime() {
     return moment(this.data.startTime);
-  }
-
-  toJSON() {
-    return this.data;
   }
 
 }

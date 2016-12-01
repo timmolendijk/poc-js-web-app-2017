@@ -73,6 +73,9 @@ export class MemberTransport implements Transport<Member>, Awaitable {
   private readonly transport = transports[process.env.RUN_ENV];
   private readonly awaiting = new Set<Promise<any>>();
 
+  // TODO(tim): This should only reject its promise (as opposed to throwing a
+  // regular error) in case of HTTP error code, while right now it also behaves
+  // as such as a result of any other error in this method.
   async list(opts) {
     const promise = this.transport.list(opts);
     this.awaiting.add(promise);

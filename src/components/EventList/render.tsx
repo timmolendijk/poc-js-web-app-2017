@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Style } from 'style';
 
 import Event from '../../models/Event';
+import EventItem from './EventItem';
 
 export interface Props {
   events: ReadonlyArray<Event>;
@@ -18,10 +19,7 @@ export function EventList({ events }: Props) {
     <Style>{styles}</Style>
     <ul>
       {events.map(event =>
-        <li key={event.id}>
-          <p>{event.startTime.format("dddd, MMMM Do YYYY, h:mm:ss a")}</p>
-          <p><a href={event.pageUrl} target="_blank">{event.name}</a> at {event.venueName}</p>
-        </li>
+        <EventItem key={event.id} event={event} />
       )}
     </ul>
   </div>;

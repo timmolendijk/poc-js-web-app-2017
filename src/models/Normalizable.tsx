@@ -19,8 +19,8 @@ export interface Normalizable {
   toJSON?(normalized?: boolean): any;
 }
 
-// Lookup from type to type identity is by far the most frequent, so we make
-// type the key and identity the value.
+// Lookup from type to type identity is by far the most frequent, so let type be
+// the key and identity the value.
 const registeredTypes = new Map<NormalizableConstructor, TypeIdentity>();
 
 export function registerType(identity: TypeIdentity, Type: NormalizableConstructor) {
@@ -44,7 +44,7 @@ export class Registry {
   constructor(data = {}) {
     Object.keys(data).forEach((typeIdentity: TypeIdentity) => {
       data[typeIdentity].forEach((instanceData) => {
-        this.set(new (getType(typeIdentity))(instanceData));
+        this.set(new (getType(typeIdentity))(instanceData, this));
       });
     });
   }
@@ -55,6 +55,12 @@ export class Registry {
     return this.types.has(typeIdentity) && this.types.get(typeIdentity).has(instanceIdentity);
   }
 
+  // TODO(tim): It may be useful if a reference to an instance does not depend
+  // on that instance already existing in the registry. It is also not strictly
+  // necessary, as long as the corresponding type can handle instances that only
+  // have an id, and they have a setter for id. In that case we can simply
+  // create an instance as soon as we find a reference to it, and then its data
+  // can be updated later when it comes in.
   get<N extends Normalizable>([typeIdentity, instanceIdentity]: Identity): N {
     if (this.has([typeIdentity, instanceIdentity]))
       return this.types.get(typeIdentity).get(instanceIdentity) as N;
