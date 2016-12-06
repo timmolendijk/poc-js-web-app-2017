@@ -1,14 +1,16 @@
 import { observable } from 'mobx';
 
-import { Identity, Registry } from '../../models/Normalizable';
+import { reportOnError } from '../../models/Error';
+import { Identity, Normalizer } from '../../models/Normalizable';
 import { Awaitable, awaitProps } from '../../models/Awaitable';
+import { isTransportError } from '../../models/Transport';
 import { Event, EventTransport } from '../../models/Event';
 
 export class EventsStore implements Awaitable {
 
-  constructor({ events = [] }: { events?: ReadonlyArray<Identity> } = {}, models: Registry) {
-    this.events = events.map(identity => models.get<Event>(identity));
-    this.transport = new EventTransport(data => models.normalize(new Event({ data }, models)));
+  constructor({ events = [] }: { events?: ReadonlyArray<Identity> } = {}, normalizer: Normalizer) {
+    this.events = events.map(identity => normalizer.instance<Event>(identity));
+    this.transport = new EventTransport(data => normalizer.instance<Event>(Event, data));
   }
 
   @observable private events: Array<Event>;
@@ -16,7 +18,7 @@ export class EventsStore implements Awaitable {
 
   get(): ReadonlyArray<Event> {
     if (!this.events.length)
-      this.load();
+      reportOnError(this.load());
 
     // TODO(tim): Can we get rid of this silly type assertion?
     return (this.events as any).peek();
@@ -28,10 +30,12 @@ export class EventsStore implements Awaitable {
     try {
       instances = await page;
     } catch (err) {
-      return;
+      if (isTransportError(err))
+        return;
+      throw err;
     }
 
-    this.events = instances.reverse();
+    this.events = instances;
   }
 
   get await() {

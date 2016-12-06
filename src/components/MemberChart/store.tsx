@@ -1,14 +1,14 @@
 import { observable, IObservableArray } from 'mobx';
 
-import { Identity, Registry } from '../../models/Normalizable';
+import { Identity, Normalizer } from '../../models/Normalizable';
 import { Awaitable, awaitProps } from '../../models/Awaitable';
 import { Member, MemberTransport } from '../../models/Member';
 
 export class MembersStore implements Awaitable {
 
-  constructor({ members = [] }: { members?: ReadonlyArray<Identity> } = {}, models: Registry) {
-    this.members = members.map(identity => models.get<Member>(identity));
-    this.transport = new MemberTransport(data => models.normalize(new Member(data)));
+  constructor({ members = [] }: { members?: ReadonlyArray<Identity> } = {}, normalizer: Normalizer) {
+    this.members = members.map(identity => normalizer.instance<Member>(identity));
+    this.transport = new MemberTransport(data => normalizer.instance<Member>(Member, data));
   }
 
   @observable private members: Array<Member>;

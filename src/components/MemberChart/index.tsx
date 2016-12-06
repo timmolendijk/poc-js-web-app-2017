@@ -12,7 +12,7 @@ declare module '../../models/State' {
 
 function storesToProps({ stores }: { stores: Stores }): RenderProps {
 
-  const members = stores.add('members', data => new MembersStore(data, stores.models));
+  const members = stores.add('members', data => new MembersStore(data, stores.normalizer));
 
   return {
     members: members.get()

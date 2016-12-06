@@ -6,9 +6,10 @@ import * as jsonp from 'jsonp';
 import * as promisify from 'es6-promisify';
 const jsonpAsync = promisify(jsonp);
 
-import { Normalizable, registerType, Identity, Registry } from './Normalizable';
+import { reportOnError } from './Error';
+import { Normalizable, registerType, Identity, Normalizer } from './Normalizable';
 import { Awaitable, awaitAll, awaitProps } from './Awaitable';
-import Transport from './Transport';
+import { Transport, createTransportError, isTransportError } from './Transport';
 import { Member, MemberTransport } from './Member';
 
 export interface EventData {
@@ -19,7 +20,7 @@ export interface EventData {
   startTime: number;
 }
 
-const endpoint = "https://api.meetup.com/AmsterdamJS/events?desc=false&photo-host=public&page=200&sig_id=5314113&status=past%2Cupcoming&sig=3710175683c3046e8fe2a0d1bb453aac3e935866";
+const endpoint = "https://api.meetup.com/AmsterdamJS/events?desc=true&photo-host=public&page=200&sig_id=5314113&status=past%2Cupcoming&sig=0fd5f3c192415dc26672d3bed99455481322375f";
 
 const transports: {
   [env: string]: Transport<EventData>;
@@ -40,7 +41,7 @@ transports['server'] = {
   async list() {
     const response = await fetch(endpoint);
     if (!response.ok)
-      throw new Error(`${response.status}: ${response.statusText}`);
+      throw createTransportError('list', `${response.status}: ${response.statusText}`);
     return (await response.json()).map(fromSourceFormat);
   }
 
@@ -54,7 +55,7 @@ transports['client'] = {
       name: 'cb'
     });
     if (response.data.errors && response.data.errors.length)
-      throw new Error(`${response.data.errors[0].code}: ${response.data.errors[0].message}`);
+      throw createTransportError('list', `${response.status}: ${response.statusText}`);
     return response.data.map(fromSourceFormat);
   }
 
@@ -88,9 +89,9 @@ export class EventTransport implements Transport<Event>, Awaitable {
 // TODO(tim): How can we make this awaitable?
 class MemberCollection {
 
-  constructor(items: ReadonlyArray<Identity> = [], models: Registry) {
-    this.items = items.map(identity => models.get<Member>(identity));
-    this.transport = new MemberTransport(data => models.normalize(new Member(data)));
+  constructor(items: ReadonlyArray<Identity> = [], normalizer: Normalizer) {
+    this.items = items.map(identity => normalizer.instance<Member>(identity));
+    this.transport = new MemberTransport(data => normalizer.instance<Member>(Member, data));
   }
 
   @observable private items: Array<Member>;
@@ -98,7 +99,7 @@ class MemberCollection {
 
   get(): ReadonlyArray<Member> {
     if (!this.items.length)
-      this.load();
+      reportOnError(this.load());
 
     // TODO(tim): Is this the best place to do this type assertion?
     return (this.items as IObservableArray<Member>).peek();
@@ -110,7 +111,9 @@ class MemberCollection {
     try {
       instances = await page;
     } catch (err) {
-      return;
+      if (isTransportError(err))
+        return;
+      throw err;
     }
     this.items = instances;
   }
@@ -123,13 +126,18 @@ class MemberCollection {
 
 export class Event implements Normalizable {
 
-  constructor({ data, members = [] }: { data: EventData, members?: ReadonlyArray<Identity> }, models: Registry) {
-    this.data = data;
-    this.members = new MemberCollection(members, models);
+  constructor(private readonly normalizer: Normalizer) {
+    this.normalizer.onData(this, data => this.data = data);
   }
 
-  private readonly data: EventData;
-  readonly members: MemberCollection;
+  private data: any = {};
+
+  // TODO(tim): How to abstract this away?
+  private _members: MemberCollection;
+  get members() {
+    this._members = this._members || new MemberCollection(this.data.members, this.normalizer);
+    return this._members;
+  }
 
   get id() {
     return this.data.id;
@@ -145,6 +153,10 @@ export class Event implements Normalizable {
   }
   get startTime() {
     return moment(this.data.startTime);
+  }
+
+  toJSON() {
+    return this.data;
   }
 
 }

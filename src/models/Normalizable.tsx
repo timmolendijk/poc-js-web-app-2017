@@ -1,6 +1,10 @@
+import { EventEmitter } from 'events';
+
 type TypeIdentity = string;
 
 type InstanceIdentity = string | number | InstanceIdentityAsArray | InstanceIdentityAsObject;
+// TODO(tim): Omit array format to make distinguishing identity tuple more
+// straight-forward? Or, give identity its own proper JavaScript type.
 interface InstanceIdentityAsArray {
   [index: number]: InstanceIdentity;
 }
@@ -11,7 +15,7 @@ interface InstanceIdentityAsObject {
 export type Identity = [TypeIdentity, InstanceIdentity];
 
 interface NormalizableConstructor {
-  new (...any): Normalizable;
+  new (data?: any, models?: Normalizer): Normalizable;
 }
 
 export interface Normalizable {
@@ -34,69 +38,99 @@ function getType(identity: TypeIdentity) {
   }
 }
 
-function identity(instance: Normalizable): Identity {
+// TODO(tim): Rename to `getIdentity` to make `identity` available for local
+// variables.
+function getIdentity(instance: Normalizable): Identity {
   // TODO(tim): Can or should this type assertion be prevented?
   return [registeredTypes.get((instance as any).constructor), instance.id];
 }
 
-export class Registry {
+export class Normalizer {
 
   constructor(data = {}) {
+    this.events = new EventEmitter();
+    this.events.setMaxListeners(0);
+
     Object.keys(data).forEach((typeIdentity: TypeIdentity) => {
       data[typeIdentity].forEach((instanceData) => {
-        this.set(new (getType(typeIdentity))(instanceData, this));
+        const Type = getType(typeIdentity);
+        const instance = new Type(this);
+        this.events.emit('data', instance, instanceData);
+        this.set(getIdentity(instance), instance);
       });
     });
   }
 
   private readonly types = new Map<TypeIdentity, Map<InstanceIdentity, Normalizable>>();
 
+  private readonly events;
+
+  onData(instance: Normalizable, handler) {
+    this.events.addListener('data', (changedInstance, data) => {
+      if (instance === changedInstance)
+        handler.call(this, data);
+    });
+  }
+
+  instance<N extends Normalizable>(identity: Identity): N;
+  instance<N extends Normalizable>(Type: NormalizableConstructor, data): N;
+  instance<N extends Normalizable>(...args): N {
+    if (args.length === 2) {
+      const [Type, data] = args;
+      let instance = new Type(this) as N;
+      this.events.emit('data', instance, data);
+      const identity = getIdentity(instance);
+      if (this.has(identity))
+        instance = this.get<N>(identity);
+      this.set(identity, instance, data);
+      return instance;
+    } else {
+      const [identity] = args;
+      if (this.has(identity))
+        return this.get<N>(identity);
+      const [typeIdentity, instanceIdentity] = identity;
+      const Type = getType(typeIdentity);
+      let instance = new Type(this) as N;
+      this.set(identity, instance);
+      return instance;
+    }
+  }
+
   has([typeIdentity, instanceIdentity]: Identity): boolean {
     return this.types.has(typeIdentity) && this.types.get(typeIdentity).has(instanceIdentity);
   }
 
-  // TODO(tim): It may be useful if a reference to an instance does not depend
-  // on that instance already existing in the registry. It is also not strictly
-  // necessary, as long as the corresponding type can handle instances that only
-  // have an id, and they have a setter for id. In that case we can simply
-  // create an instance as soon as we find a reference to it, and then its data
-  // can be updated later when it comes in.
   get<N extends Normalizable>([typeIdentity, instanceIdentity]: Identity): N {
     if (this.has([typeIdentity, instanceIdentity]))
       return this.types.get(typeIdentity).get(instanceIdentity) as N;
   }
 
-  private set(instance: Normalizable) {
-    const [typeIdentity, instanceIdentity] = identity(instance);
-    if (!this.types.has(typeIdentity))
-      this.types.set(typeIdentity, new Map<InstanceIdentity, Normalizable>());
-    const originalToJSON = instance.toJSON || function () {
-      return this;
-    };
-    instance.toJSON = function (normalized?: boolean) {
-      // TODO(tim): `toJSON` already has an argument, which is an index of some
-      // kind or another. We prevent disaster here by strictly checking for not
-      // `false` (i.e. not a number), but it still feels rather tricky.
-      if (normalized !== false)
-        return [typeIdentity, instanceIdentity];
-      // If the resulting object preserves a `toJSON` method, it will
-      // recursively keep calling it (without preserving our `normalized`
-      // argument as `false`) and it will end up always serializing in
-      // normalized format.
-      const data = Object.assign({}, this);
-      delete data.toJSON;
-      return originalToJSON.call(data);
-    };
-    this.types.get(typeIdentity).set(instanceIdentity, instance);
-  }
-
-  normalize<N extends Normalizable>(instance: N): N {
-    const id = identity(instance);
-    if (this.has(id))
-      instance = this.get<N>(id);
-    else
-      this.set(instance);
-    return instance;
+  private set(identity: Identity, instance: Normalizable, data?) {
+    if (!this.has(identity)) {
+      const [typeIdentity, instanceIdentity] = identity;
+      if (!this.types.has(typeIdentity))
+        this.types.set(typeIdentity, new Map<InstanceIdentity, Normalizable>());
+      this.types.get(typeIdentity).set(instanceIdentity, instance);
+      const originalToJSON = instance.toJSON || function () {
+        return this;
+      };
+      instance.toJSON = function (normalized?: boolean) {
+        // TODO(tim): `toJSON` already has an argument, which is an index of some
+        // kind or another. We prevent disaster here by strictly checking for not
+        // `false` (i.e. not a number), but it still feels rather tricky.
+        if (normalized !== false)
+          return [typeIdentity, instanceIdentity];
+        // If the resulting object preserves a `toJSON` method, it will
+        // recursively keep calling it (without preserving our `normalized`
+        // argument as `false`) and it will end up always serializing in
+        // normalized format.
+        const data = Object.assign({}, this);
+        delete data.toJSON;
+        return originalToJSON.call(data);
+      };
+    }
+    if (data)
+      this.events.emit('data', this.get(identity), data);
   }
 
   toJSON() {

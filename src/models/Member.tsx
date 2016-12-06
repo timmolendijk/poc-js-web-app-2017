@@ -5,9 +5,9 @@ import * as jsonp from 'jsonp';
 import * as promisify from 'es6-promisify';
 const jsonpAsync = promisify(jsonp);
 
-import { Normalizable, registerType } from './Normalizable';
+import { Normalizable, registerType, Normalizer } from './Normalizable';
 import { Awaitable, awaitAll } from './Awaitable';
-import Transport from './Transport';
+import { Transport, createTransportError } from './Transport';
 
 export interface MemberData {
   id: number;
@@ -46,7 +46,7 @@ transports['server'] = {
   async list({ max } = {}) {
     const response = await fetch(endpoint);
     if (!response.ok)
-      throw new Error(`${response.status}: ${response.statusText}`);
+      throw createTransportError('list', `${response.status}: ${response.statusText}`);
     return (await response.json()).slice(0, Math.min(5, max)).map(fromSourceFormat);
   }
 
@@ -60,7 +60,7 @@ transports['client'] = {
       name: 'cb'
     });
     if (response.data.errors && response.data.errors.length)
-      throw new Error(`${response.data.errors[0].code}: ${response.data.errors[0].message}`);
+      throw createTransportError('list', `${response.data.errors[0].code}: ${response.data.errors[0].message}`);
     return response.data.slice(0, max).map(fromSourceFormat);
   }
 
@@ -73,9 +73,6 @@ export class MemberTransport implements Transport<Member>, Awaitable {
   private readonly transport = transports[process.env.RUN_ENV];
   private readonly awaiting = new Set<Promise<any>>();
 
-  // TODO(tim): This should only reject its promise (as opposed to throwing a
-  // regular error) in case of HTTP error code, while right now it also behaves
-  // as such as a result of any other error in this method.
   async list(opts) {
     const promise = this.transport.list(opts);
     this.awaiting.add(promise);
@@ -96,8 +93,8 @@ export class MemberTransport implements Transport<Member>, Awaitable {
 
 export class Member implements Normalizable {
 
-  constructor(data?: MemberData) {
-    Object.assign(this, data);
+  constructor(normalizer: Normalizer) {
+    normalizer.onData(this, data => Object.assign(this, data));
   }
 
   readonly id;

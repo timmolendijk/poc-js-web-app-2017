@@ -7,7 +7,7 @@ import { Style } from 'style';
 import * as moment from 'moment';
 
 import { Stores } from '../../../models/State'
-import { Identity, Registry } from '../../../models/Normalizable';
+import { Identity, Normalizer } from '../../../models/Normalizable';
 import Event from '../../../models/Event';
 
 declare module '../../../models/State' {
@@ -18,8 +18,8 @@ declare module '../../../models/State' {
 
 class EventStore {
 
-  constructor({ expanded = [] }: { expanded?: ReadonlyArray<Identity> } = {}, models: Registry) {
-    this.expanded = expanded.map(identity => models.get<Event>(identity));
+  constructor({ expanded = [] }: { expanded?: ReadonlyArray<Identity> } = {}, normalize: Normalizer) {
+    this.expanded = expanded.map(identity => normalize.get<Event>(identity));
   }
 
   @observable private readonly expanded: Array<Event>;
@@ -41,7 +41,7 @@ interface Props {
 
 function storesToProps({ stores }: { stores: Stores }, { event }: Props): RenderProps {
 
-  stores.add('event', data => new EventStore(data, stores.models));
+  stores.add('event', data => new EventStore(data, stores.normalizer));
 
   return {
     event,

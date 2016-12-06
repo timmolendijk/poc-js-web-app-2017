@@ -10,8 +10,10 @@ const state = new State((window as any).__STATE__);
 
 // TODO(tim): Replace with a more powerful debugging tool such as writing an
 // adapter for the Redux dev tool.
-if (process.env.NODE_ENV === 'development')
+if (process.env.NODE_ENV === 'development') {
+  console.info("Your application state is accessible at `window.__state__`. Happy developing!");
   (window as any).__state__ = state;
+}
 
 render(
   <ClientStyled>
