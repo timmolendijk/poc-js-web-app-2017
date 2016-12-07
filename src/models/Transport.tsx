@@ -1,5 +1,9 @@
+export interface ListOptions {
+  [opt: string]: any;
+}
+
 export interface Transport<M> {
-  list(opts?: { [opt: string]: any }): Promise<ReadonlyArray<M>>;
+  list(opts?: ListOptions): Promise<ReadonlyArray<M>>;
 }
 
 type Operation = 'create' | 'read' | 'update' | 'delete' | 'list';

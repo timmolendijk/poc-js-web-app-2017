@@ -45,7 +45,7 @@ function storesToProps({ stores }: { stores: Stores }, { event }: Props): Render
 
   return {
     event,
-    attendees: stores.event.isExpanded(event) && event.members.get(),
+    attendees: stores.event.isExpanded(event) && event.attendees.get(),
     onExpand() {
       stores.event.expand(event);
     }
@@ -84,7 +84,7 @@ function EventItem({ event, attendees, onExpand }: RenderProps) {
       return null;
     
     return <div>
-      <h3>Attendees</h3>
+      <h3>{attendees.length} attendees</h3>
       <ul>
         {attendees.map(member =>
           <li key={member.id}>{member.name}</li>

@@ -38,8 +38,6 @@ function getType(identity: TypeIdentity) {
   }
 }
 
-// TODO(tim): Rename to `getIdentity` to make `identity` available for local
-// variables.
 function getIdentity(instance: Normalizable): Identity {
   // TODO(tim): Can or should this type assertion be prevented?
   return [registeredTypes.get((instance as any).constructor), instance.id];
@@ -115,9 +113,10 @@ export class Normalizer {
         return this;
       };
       instance.toJSON = function (normalized?: boolean) {
-        // TODO(tim): `toJSON` already has an argument, which is an index of some
-        // kind or another. We prevent disaster here by strictly checking for not
-        // `false` (i.e. not a number), but it still feels rather tricky.
+        // TODO(tim): `toJSON` already has an argument, which is an index of
+        // some kind or another. We prevent disaster here by strictly checking
+        // for not `false` (i.e. not a number), but it still feels rather
+        // tricky.
         if (normalized !== false)
           return [typeIdentity, instanceIdentity];
         // If the resulting object preserves a `toJSON` method, it will

@@ -87,26 +87,26 @@ export class EventTransport implements Transport<Event>, Awaitable {
 }
 
 // TODO(tim): How can we make this awaitable?
-class MemberCollection {
+class AttendeeCollection {
 
-  constructor(items: ReadonlyArray<Identity> = [], normalizer: Normalizer) {
-    this.items = items.map(identity => normalizer.instance<Member>(identity));
+  constructor(private readonly event: Event, members: ReadonlyArray<Identity> = [], normalizer: Normalizer) {
+    this.members = members.map(identity => normalizer.instance<Member>(identity));
     this.transport = new MemberTransport(data => normalizer.instance<Member>(Member, data));
   }
 
-  @observable private items: Array<Member>;
+  @observable private members: Array<Member>;
   private readonly transport: MemberTransport;
 
   get(): ReadonlyArray<Member> {
-    if (!this.items.length)
+    if (!this.members.length)
       reportOnError(this.load());
 
     // TODO(tim): Is this the best place to do this type assertion?
-    return (this.items as IObservableArray<Member>).peek();
+    return (this.members as IObservableArray<Member>).peek();
   }
 
   private async load() {
-    const page = this.transport.list({ max: 200 });
+    const page = this.transport.list({ event: this.event });
     let instances;
     try {
       instances = await page;
@@ -115,11 +115,11 @@ class MemberCollection {
         return;
       throw err;
     }
-    this.items = instances;
+    this.members = instances;
   }
 
   toJSON() {
-    return [...this.items];
+    return [...this.members];
   }
 
 }
@@ -133,10 +133,10 @@ export class Event implements Normalizable {
   private data: any = {};
 
   // TODO(tim): How to abstract this away?
-  private _members: MemberCollection;
-  get members() {
-    this._members = this._members || new MemberCollection(this.data.members, this.normalizer);
-    return this._members;
+  private _attendees: AttendeeCollection;
+  get attendees() {
+    this._attendees = this._attendees || new AttendeeCollection(this, this.data.attendees, this.normalizer);
+    return this._attendees;
   }
 
   get id() {
@@ -156,7 +156,7 @@ export class Event implements Normalizable {
   }
 
   toJSON() {
-    return this.data;
+    return Object.assign(this.data, { attendees: this.attendees });
   }
 
 }
