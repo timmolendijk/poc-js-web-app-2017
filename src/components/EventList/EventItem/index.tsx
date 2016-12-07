@@ -44,7 +44,10 @@ function storesToProps({ stores }: { stores: Stores }, { event }: Props): Render
   stores.add('event', data => new EventStore(data, stores.normalizer));
 
   return {
-    event,
+    name: event.name,
+    pageUrl: event.pageUrl,
+    venueName: event.venueName,
+    startTime: event.startTime,
     attendees: stores.event.isExpanded(event) && event.attendees.get(),
     onExpand() {
       stores.event.expand(event);
@@ -54,12 +57,10 @@ function storesToProps({ stores }: { stores: Stores }, { event }: Props): Render
 }
  
 interface RenderProps {
-  event: {
-    name: string;
-    pageUrl: string;
-    venueName: string;
-    startTime: moment.Moment;
-  };
+  name: string;
+  pageUrl: string;
+  venueName: string;
+  startTime: moment.Moment;
   attendees: ReadonlyArray<{
     id: any;
     name: string;
@@ -67,15 +68,15 @@ interface RenderProps {
   onExpand(): void;
 }
 
-function EventItem({ event, attendees, onExpand }: RenderProps) {
+function EventItem({ name, pageUrl, venueName, startTime, attendees, onExpand }: RenderProps) {
 
   // TODO(tim): Using `li` here means that we make an assumption about where it
   // is used, which is not ideal when trying to keep coupling as loose as
   // possible.
   return <li onClick={onExpand} className="EventItem">
     <Style>{styles}</Style>
-    <p>{event.startTime.format("dddd, MMMM Do YYYY, h:mm:ss a")}</p>
-    <p><a href={event.pageUrl} target="_blank">{event.name}</a> at {event.venueName}</p>
+    <p>{startTime.format("dddd, MMMM Do YYYY, h:mm:ss a")}</p>
+    <p><a href={pageUrl} target="_blank">{name}</a> at {venueName}</p>
     {renderAttendees()}
   </li>;
 
