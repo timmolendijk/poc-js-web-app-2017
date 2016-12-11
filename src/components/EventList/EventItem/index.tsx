@@ -49,6 +49,7 @@ function storesToProps({ stores }: { stores: Stores }, { event }: Props): Render
     venueName: event.venueName,
     startTime: event.startTime,
     attendees: stores.event.isExpanded(event) && event.attendees.get(),
+    loading: event.attendees.loading,
     onExpand() {
       stores.event.expand(event);
     }
@@ -65,10 +66,11 @@ interface RenderProps {
     id: any;
     name: string;
   }>;
+  loading: boolean;
   onExpand(): void;
 }
 
-function EventItem({ name, pageUrl, venueName, startTime, attendees, onExpand }: RenderProps) {
+function EventItem({ name, pageUrl, venueName, startTime, attendees, loading, onExpand }: RenderProps) {
 
   // TODO(tim): Using `li` here means that we make an assumption about where it
   // is used, which is not ideal when trying to keep coupling as loose as
@@ -77,11 +79,21 @@ function EventItem({ name, pageUrl, venueName, startTime, attendees, onExpand }:
     <Style>{styles}</Style>
     <p>{startTime.format("dddd, MMMM Do YYYY, h:mm:ss a")}</p>
     <p><a href={pageUrl} target="_blank">{name}</a> at {venueName}</p>
+    {renderLoader()}
     {renderAttendees()}
   </li>;
 
+  function renderLoader() {
+    if (!loading)
+      return null;
+    
+    return <div>
+      ∞ l o a d i n g ∞
+    </div>;
+  }
+
   function renderAttendees() {
-    if (!attendees)
+    if (!attendees || loading)
       return null;
     
     return <div>

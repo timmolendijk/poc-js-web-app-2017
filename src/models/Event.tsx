@@ -1,4 +1,4 @@
-import { observable, IObservableArray } from 'mobx';
+import { observable, action, IObservableArray } from 'mobx';
 import * as fetch from 'isomorphic-fetch';
 import * as moment from 'moment';
 
@@ -98,14 +98,22 @@ class AttendeeCollection {
   private readonly transport: MemberTransport;
 
   get(): ReadonlyArray<Member> {
-    if (!this.members.length)
-      reportOnError(this.load());
+    if (!this.members.length && !this.loading)
+      // TODO(tim): Don't we have some official API for deferring this to the
+      // end of the call stack?
+      setTimeout(() => reportOnError(this.load()));
 
     // TODO(tim): Is this the best place to do this type assertion?
     return (this.members as IObservableArray<Member>).peek();
   }
 
+  @observable private _loading: boolean = false;
+  get loading() {
+    return this._loading;
+  }
+
   private async load() {
+    this.startLoad();
     const page = this.transport.list({ event: this.event });
     let instances;
     try {
@@ -115,7 +123,20 @@ class AttendeeCollection {
         return;
       throw err;
     }
-    this.members = instances;
+    this.endLoad(instances);
+  }
+
+  @action private startLoad() {
+    this._loading = true;
+  }
+  @action private endLoad(members: ReadonlyArray<Member>) {
+    this.members = members.slice();
+    this._loading = false;
+  }
+
+  get await() {
+    // TODO(tim): Implement based on `this.loading` instead?
+    return awaitProps(this);
   }
 
   toJSON() {

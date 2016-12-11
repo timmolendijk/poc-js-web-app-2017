@@ -22,4 +22,4 @@ function storesToProps({ stores }: { stores: Stores }): RenderProps {
 
 export interface Props {}
 
-export default inject(storesToProps)(EventList) as React.StatelessComponent<Props>;
+export default inject(storesToProps)(EventList);
