@@ -5,7 +5,7 @@ import * as Helmet from 'react-helmet';
 import DevTool from 'mobx-react-devtools';
 import { ServerStyled } from 'style';
 
-import State from '../models/State';
+import State from 'State';
 import Base from './Base';
 import Page from './Page';
 import Home from './Home';

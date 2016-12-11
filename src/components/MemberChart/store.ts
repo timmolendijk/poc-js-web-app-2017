@@ -1,8 +1,8 @@
 import { observable, IObservableArray } from 'mobx';
 
-import { Identity, Normalizer } from '../../models/Normalizable';
-import { Awaitable, awaitProps } from '../../models/Awaitable';
-import { Member, MemberTransport } from '../../models/Member';
+import { Identity, Normalizer } from 'Normalizable';
+import { Awaitable, awaitProps } from 'Awaitable';
+import { Member, MemberTransport } from 'models';
 
 export class MembersStore implements Awaitable {
 

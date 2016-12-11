@@ -4,7 +4,7 @@ import { renderToString } from 'react-dom/server';
 import { useStaticRendering } from 'mobx-react';
 import { ServerRouter, createServerRenderContext } from 'react-router';
 
-import State from './models/State';
+import State from 'State';
 import { BaseConstructor } from './components/Base';
 import DynamicBase from './components/DynamicBase';
 import AmpBase from './components/AmpBase';

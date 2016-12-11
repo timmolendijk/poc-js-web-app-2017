@@ -3,7 +3,7 @@ import { render } from 'react-dom';
 import { BrowserRouter } from 'react-router';
 import { ClientStyled } from 'style';
 
-import State from './models/State';
+import State from 'State';
 import DynamicBase from './components/DynamicBase';
 
 const state = new State((window as any).__STATE__);

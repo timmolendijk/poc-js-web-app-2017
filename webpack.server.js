@@ -37,15 +37,13 @@ module.exports = {
     }]
   },
   target: 'node',
-  externals: [
-    {
-      'style': false
-    },
-    function (context, request, cb) {
-      if (/\.css$/.test(request))
-        return cb(null, false);
-      cb();
-    },
-    /^[^\.\/]/
-  ]
+  // TODO(tim): This approach is low-maintenance yet super slow.
+  externals(context, request, cb) {
+    try {
+      require.resolve(request);
+    } catch (err) {
+      return cb(null, false);
+    }
+    cb(null, true);
+  }
 };

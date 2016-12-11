@@ -1,10 +1,10 @@
 import { inject } from 'mobx-react';
 
-import { Stores } from '../../models/State'
+import { Stores } from 'State'
 import { EventsStore } from './store';
 import { EventList, Props as RenderProps } from './render';
 
-declare module '../../models/State' {
+declare module 'State' {
   interface Stores {
     events?: EventsStore
   }

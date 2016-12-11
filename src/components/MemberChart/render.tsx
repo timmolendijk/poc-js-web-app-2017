@@ -3,7 +3,7 @@ import * as styles from './index.css'
 import * as React from 'react';
 import { Style } from 'style';
 
-import Member from '../../models/Member';
+import { Member } from 'models';
 import MemberCard from '../MemberCard';
 
 export interface Props {

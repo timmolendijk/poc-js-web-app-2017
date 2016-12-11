@@ -1,10 +1,10 @@
 import { observable } from 'mobx';
 
-import { reportOnError } from '../../models/Error';
-import { Identity, Normalizer } from '../../models/Normalizable';
-import { Awaitable, awaitProps } from '../../models/Awaitable';
-import { isTransportError } from '../../models/Transport';
-import { Event, EventTransport } from '../../models/Event';
+import { reportOnError } from 'Error';
+import { Identity, Normalizer } from 'Normalizable';
+import { Awaitable, awaitProps } from 'Awaitable';
+import { isTransportError } from 'Transport';
+import { Event, EventTransport } from 'models';
 
 export class EventsStore implements Awaitable {
 

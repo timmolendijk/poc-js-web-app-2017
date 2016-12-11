@@ -4,10 +4,10 @@ import * as React from 'react';
 import { Provider } from 'mobx-react';
 import { Style } from 'style';
 
-import { State, Stores } from '../models/State'
-import { Normalizer } from '../models/Normalizable';
+import { State, Stores } from 'State'
+import { Normalizer } from 'Normalizable';
 
-declare module '../models/State' {
+declare module 'State' {
   interface Stores {
     normalizer?: Normalizer;
   }

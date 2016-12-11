@@ -1,10 +1,10 @@
 import { inject } from 'mobx-react';
 
-import { Stores } from '../../models/State'
+import { Stores } from 'State'
 import { MembersStore } from './store';
 import { MemberChart, Props as RenderProps } from './render';
 
-declare module '../../models/State' {
+declare module 'State' {
   interface Stores {
     members?: MembersStore
   }
@@ -22,4 +22,4 @@ function storesToProps({ stores }: { stores: Stores }): RenderProps {
 
 export interface Props {}
 
-export default inject(storesToProps)(MemberChart) as React.StatelessComponent<Props>;
+export default inject(storesToProps)(MemberChart);

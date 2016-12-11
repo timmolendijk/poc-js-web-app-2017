@@ -6,11 +6,11 @@ import { inject } from 'mobx-react';
 import { Style } from 'style';
 import * as moment from 'moment';
 
-import { Stores } from '../../../models/State'
-import { Identity, Normalizer } from '../../../models/Normalizable';
-import Event from '../../../models/Event';
+import { Stores } from 'State'
+import { Identity, Normalizer } from 'Normalizable';
+import { Event } from 'models';
 
-declare module '../../../models/State' {
+declare module 'State' {
   interface Stores {
     event?: EventStore
   }

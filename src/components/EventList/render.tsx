@@ -3,7 +3,7 @@ import * as styles from './index.css'
 import * as React from 'react';
 import { Style } from 'style';
 
-import Event from '../../models/Event';
+import { Event } from 'models';
 import EventItem from './EventItem';
 
 export interface Props {
