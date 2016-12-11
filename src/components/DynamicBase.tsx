@@ -2,6 +2,7 @@ import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Match, Miss } from 'react-router';
 import * as Helmet from 'react-helmet';
+import DevTool from 'mobx-react-devtools';
 import { ServerStyled } from 'style';
 
 import State from '../models/State';
@@ -13,8 +14,16 @@ import NotFound from './NotFound';
 
 export default class DynamicBase extends React.Component<{ state: State }, {}> {
 
+  private renderDevTools() {
+    if (process.env.NODE_ENV !== 'development')
+      return null;
+    
+    return <DevTool />;
+  }
+
   render() {
     return <Base state={this.props.state}>
+      {this.renderDevTools()}
       <Page>
         <Match exactly pattern="/" component={Home} />
         <Match exactly pattern="/events" component={EventList} />

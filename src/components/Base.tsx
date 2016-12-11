@@ -32,6 +32,8 @@ export default function Base({ state, children }: Props) {
 
   return <div>
     <Style>{styles}</Style>
-    <Provider stores={state.stores}>{children}</Provider>
+    <Provider stores={state.stores}>
+      <div>{children}</div>
+    </Provider>
   </div>;
 }
