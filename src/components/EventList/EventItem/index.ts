@@ -2,12 +2,12 @@ import { inject } from 'mobx-react';
 
 import { Stores } from 'State'
 import { Event } from 'models';
-import { EventStore } from './store';
+import EventStore from './store';
 import { EventItem, Props as RenderProps } from './render';
 
 declare module 'State' {
   interface Stores {
-    event?: EventStore
+    event?: EventStore;
   }
 }
 
@@ -17,6 +17,8 @@ interface Props {
 
 function storesToProps({ stores }: { stores: Stores }, { event }: Props): RenderProps {
 
+  // TODO(tim): This store is exclusively for managing component state, so it
+  // should probably have a less generic name. Perhaps simply `EventItem`?
   stores.add('event', data => new EventStore(data, stores.normalizer));
 
   return {
