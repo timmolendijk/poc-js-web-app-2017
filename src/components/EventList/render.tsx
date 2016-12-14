@@ -19,7 +19,7 @@ export function EventList({ events }: Props) {
     <Style>{styles}</Style>
     <ul>
       {events.map(event =>
-        <EventItem key={event.id} event={event} />
+        <li key={event.id}><EventItem event={event} /></li>
       )}
     </ul>
   </div>;

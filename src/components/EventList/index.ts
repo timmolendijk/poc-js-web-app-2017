@@ -10,6 +10,8 @@ declare module 'State' {
   }
 }
 
+export interface Props {}
+
 function storesToProps({ stores }: { stores: Stores }): RenderProps {
 
   const events = stores.add('events', data => new EventsStore(data, stores.normalizer));
@@ -19,7 +21,5 @@ function storesToProps({ stores }: { stores: Stores }): RenderProps {
   };
 
 }
-
-export interface Props {}
 
 export default inject(storesToProps)(EventList);

@@ -4,31 +4,28 @@ import * as React from 'react';
 import { Style } from 'style';
 import * as moment from 'moment';
 
+import { Member } from 'models';
+import AttendeeItem from './AttendeeItem';
+
 export interface Props {
   name: string;
   pageUrl: string;
   venueName: string;
   startTime: moment.Moment;
-  attendees: ReadonlyArray<{
-    id: any;
-    name: string;
-  }>;
+  attendees: ReadonlyArray<Member>;
   loading: boolean;
   onExpand(): void;
 }
 
 export function EventItem({ name, pageUrl, venueName, startTime, attendees, loading, onExpand }: Props) {
 
-  // TODO(tim): Using `li` here means that we make an assumption about where it
-  // is used, which is not ideal when trying to keep coupling as loose as
-  // possible.
-  return <li onClick={onExpand} className="EventItem">
+  return <div onClick={onExpand} className="EventItem">
     <Style>{styles}</Style>
     <p>{startTime.format("dddd, MMMM Do YYYY, h:mm:ss a")}</p>
     <p><a href={pageUrl} target="_blank">{name}</a> at {venueName}</p>
     {renderLoader()}
     {renderAttendees()}
-  </li>;
+  </div>;
 
   function renderLoader() {
     if (!loading)
@@ -44,8 +41,8 @@ export function EventItem({ name, pageUrl, venueName, startTime, attendees, load
     return <div>
       <h3>{attendees.length} attendees</h3>
       <ul>
-        {attendees.map(member =>
-          <li key={member.id}>{member.name}</li>
+        {attendees.map(attendee =>
+          <li key={attendee.id}><AttendeeItem member={attendee} /></li>
         )}
       </ul>
     </div>;
