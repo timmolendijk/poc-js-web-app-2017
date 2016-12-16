@@ -12,30 +12,29 @@ export interface Props {
   pageUrl: string;
   venueName: string;
   startTime: moment.Moment;
+  expanded: boolean;
   attendees: ReadonlyArray<Member>;
   loading: boolean;
   onExpand(): void;
 }
 
-export function EventItem({ name, pageUrl, venueName, startTime, attendees, loading, onExpand }: Props) {
+export function EventItem({ name, pageUrl, venueName, expanded, startTime, attendees, loading, onExpand }: Props) {
 
   return <div onClick={onExpand} className="EventItem">
     <Style>{styles}</Style>
     <p>{startTime.format("dddd, MMMM Do YYYY, h:mm:ss a")}</p>
     <p><a href={pageUrl} target="_blank">{name}</a> at {venueName}</p>
-    {renderLoader()}
     {renderAttendees()}
   </div>;
 
-  function renderLoader() {
-    if (!loading)
+  function renderAttendees() {
+    if (!expanded)
       return null;
     
-    return <div>loading 👀</div>;
-  }
-
-  function renderAttendees() {
-    if (!attendees || loading)
+    if (loading)
+      return <div>loading 👀</div>;
+    
+    if (!attendees)
       return null;
     
     return <div>
