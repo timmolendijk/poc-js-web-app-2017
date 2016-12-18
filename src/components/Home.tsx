@@ -1,11 +1,8 @@
 import * as styles from './Home.css';
-
 import * as brandUrl from './brand.png';
-
 import * as React from 'react';
 import { Link } from 'react-router';
 import { Style } from 'style';
-
 import MemberChart from './MemberChart';
 
 export default function Home() {

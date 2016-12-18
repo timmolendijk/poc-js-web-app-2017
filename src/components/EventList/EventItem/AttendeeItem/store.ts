@@ -1,9 +1,8 @@
 import { observable, action } from 'mobx';
-
-import { Identity, Normalizer } from 'Normalizable';
+import { IIdentity, Normalizer } from 'normalize';
 import { Member } from 'models';
 
-export class AttendeeItemStore {
+export default class AttendeeItemStore {
 
   @observable name: string = null;
 
@@ -22,5 +21,3 @@ export class AttendeeItemStore {
   }
 
 }
-
-export default AttendeeItemStore;

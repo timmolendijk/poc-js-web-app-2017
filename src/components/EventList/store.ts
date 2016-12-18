@@ -1,20 +1,19 @@
 import { observable } from 'mobx';
+import { reportOnError } from 'error';
+import { IIdentity, Normalizer } from 'normalize';
+import { IAwaitable, awaitProps } from 'await';
+import { ITransport, isTransportError } from 'transport';
+import { Event } from 'models';
 
-import { reportOnError } from 'Error';
-import { Identity, Normalizer } from 'Normalizable';
-import { Awaitable, awaitProps } from 'Awaitable';
-import { isTransportError } from 'Transport';
-import { Event, EventTransport } from 'models';
+export default class EventListStore implements IAwaitable {
 
-export class EventsStore implements Awaitable {
-
-  constructor({ events = [] }: { events?: ReadonlyArray<Identity> } = {}, normalizer: Normalizer) {
+  constructor({ events = [] }: { events?: ReadonlyArray<IIdentity> } = {}, normalizer: Normalizer) {
     this.events = events.map(identity => normalizer.instance<Event>(identity));
-    this.transport = new EventTransport(data => normalizer.instance<Event>(Event, data));
+    this.transport = new Event.Transport(data => normalizer.instance<Event>(Event, data));
   }
 
   @observable private events: Array<Event>;
-  private readonly transport: EventTransport;
+  private readonly transport: ITransport<Event>;
 
   get(): ReadonlyArray<Event> {
     if (!this.events.length)
@@ -43,5 +42,3 @@ export class EventsStore implements Awaitable {
   }
 
 }
-
-export default EventsStore;

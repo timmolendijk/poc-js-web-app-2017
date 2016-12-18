@@ -1,13 +1,12 @@
 import { observable, action, expr } from 'mobx';
-
-import { Identity, Normalizer } from 'Normalizable';
+import { IIdentity, Normalizer } from 'normalize';
 import { Event } from 'models';
 
-export class EventStore {
+export default class EventItemStore {
 
   // TODO(tim): We do not really use all of this as long as we never serialize
   // this object in practice.
-  constructor({ expanded = [] }: { expanded?: ReadonlyArray<Identity> } = {}, normalize: Normalizer) {
+  constructor({ expanded = [] }: { expanded?: ReadonlyArray<IIdentity> } = {}, normalize: Normalizer) {
     this.expanded = expanded.map(identity => normalize.get<Event>(identity));
   }
 
@@ -23,5 +22,3 @@ export class EventStore {
   }
 
 }
-
-export default EventStore;

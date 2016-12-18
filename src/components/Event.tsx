@@ -1,9 +1,7 @@
 import * as styles from './Event.css';
-
 import * as React from 'react';
 import * as Helmet from 'react-helmet';
 import { Style } from 'style';
-
 import AmpImg from './AmpImg';
 
 const name = "My Event";

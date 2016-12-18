@@ -3,8 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { Match, Miss } from 'react-router';
 import * as Helmet from 'react-helmet';
 import { ServerStyled } from 'style';
-
-import State from 'State';
+import { State } from 'state';
 import Base from './Base';
 import Page from './Page';
 import Event from './Event';

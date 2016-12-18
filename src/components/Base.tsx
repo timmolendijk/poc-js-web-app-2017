@@ -1,39 +1,36 @@
 import * as styles from './Base.css';
-
 import * as React from 'react';
-import { Provider } from 'mobx-react';
 import { Style } from 'style';
+import { State, IStores, ProvideState } from 'state'
+import { Normalizer } from 'normalize';
 
-import { State, Stores } from 'State'
-import { Normalizer } from 'Normalizable';
-
-declare module 'State' {
-  interface Stores {
+declare module 'state' {
+  interface IStores {
     normalizer?: Normalizer;
   }
 }
 
-interface Props {
-  state: State,
-  children?: any
+interface IProps {
+  state: State;
+  children?: any;
 }
 
-export interface BaseConstructor {
-  new (props: Props): React.Component<Props, {}>;
+export interface IBaseConstructor {
+  new (props: IProps): React.Component<IProps, {}>;
   renderToDocument(component, state): string;
 }
 
-export default function Base({ state, children }: Props) {
+export default function Base({ state, children }: IProps) {
 
   // May look dubious to do this upon every render, but as far as I can see in
   // practice this is just fine because this component will render exactly once
   // per instantiation.
-  state.stores.add('normalizer', data => new Normalizer(data));
+  state.addStore('normalizer', data => new Normalizer(data));
 
   return <div>
     <Style>{styles}</Style>
-    <Provider stores={state.stores}>
+    <ProvideState state={state}>
       <div>{children}</div>
-    </Provider>
+    </ProvideState>
   </div>;
 }

@@ -1,8 +1,6 @@
 import * as styles from './MemberCard.css';
-
 import * as React from 'react';
 import { Style } from 'style';
-
 import { Member } from 'models';
 
 export default function MemberCard({ member }: { member: Member }) {

@@ -1,18 +1,18 @@
 import { observable, IObservableArray } from 'mobx';
+import { IIdentity, Normalizer } from 'normalize';
+import { IAwaitable, awaitProps } from 'await';
+import { ITransport } from 'transport';
+import { Member } from 'models';
 
-import { Identity, Normalizer } from 'Normalizable';
-import { Awaitable, awaitProps } from 'Awaitable';
-import { Member, MemberTransport } from 'models';
+export default class MemberChartStore implements IAwaitable {
 
-export class MembersStore implements Awaitable {
-
-  constructor({ members = [] }: { members?: ReadonlyArray<Identity> } = {}, normalizer: Normalizer) {
+  constructor({ members = [] }: { members?: ReadonlyArray<IIdentity> } = {}, normalizer: Normalizer) {
     this.members = members.map(identity => normalizer.instance<Member>(identity));
-    this.transport = new MemberTransport(data => normalizer.instance<Member>(Member, data));
+    this.transport = new Member.Transport(data => normalizer.instance<Member>(Member, data));
   }
 
   @observable private members: Array<Member>;
-  private readonly transport: MemberTransport;
+  private readonly transport: ITransport<Member>;
 
   get(): ReadonlyArray<Member> {
     if (process.env.RUN_ENV !== 'server' || !this.members.length)
@@ -41,5 +41,3 @@ export class MembersStore implements Awaitable {
   }
 
 }
-
-export default MembersStore;

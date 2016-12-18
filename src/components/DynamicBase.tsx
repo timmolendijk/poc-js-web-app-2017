@@ -4,8 +4,7 @@ import { Match, Miss } from 'react-router';
 import * as Helmet from 'react-helmet';
 import DevTool from 'mobx-react-devtools';
 import { ServerStyled } from 'style';
-
-import State from 'State';
+import { State } from 'state';
 import Base from './Base';
 import Page from './Page';
 import Home from './Home';

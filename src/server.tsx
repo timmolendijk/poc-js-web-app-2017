@@ -3,16 +3,15 @@ import * as React from 'react';
 import { renderToString } from 'react-dom/server';
 import { useStaticRendering } from 'mobx-react';
 import { ServerRouter, createServerRenderContext } from 'react-router';
-
-import State from 'State';
-import { BaseConstructor } from './components/Base';
+import { State } from 'state';
+import { IBaseConstructor } from './components/Base';
 import DynamicBase from './components/DynamicBase';
 import AmpBase from './components/AmpBase';
 
 useStaticRendering(true);
 
 // Middleware for serving resources of a single type.
-const renderOnMatch = (Base: BaseConstructor) => async function (context, next) {
+const renderOnMatch = (Base: IBaseConstructor) => async function (context, next) {
 
   const state = new State();
 
