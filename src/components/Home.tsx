@@ -3,7 +3,6 @@ import * as brandUrl from './brand.png';
 import * as React from 'react';
 import { Link } from 'react-router';
 import { Style } from 'style';
-import MemberChart from './MemberChart';
 
 export default function Home() {
 
@@ -14,7 +13,6 @@ export default function Home() {
       <Link to="/events">Our events</Link>
     </div>
     <h2>Home</h2>
-    <MemberChart />
   </div>;
 
 };

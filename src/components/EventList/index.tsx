@@ -1,24 +1,23 @@
 import * as styles from './index.css'
 import * as React from 'react';
-import { computed } from 'mobx';
 import { observer } from 'mobx-react';
 import { Style } from 'style';
-import { injectStore } from 'state'
+import * as Mescy from 'mescy'
 import Store from './store';
-import EventItem from './EventItem';
 
 interface IProps {
+  // TODO(tim): The fact that the injected store can also be provided as a
+  // property should be modeled by the return type of `injectStore()`.
   store?: Store;
 }
-
-const withStore = injectStore<IProps>(
-  (data, stores) => new Store(data, stores.normalizer)
-);
 
 class EventList extends React.Component<IProps, {}> {
 
   render() {
-    const events = this.props.store.get();
+    const { events, loading } = this.props.store;
+
+    if (loading)
+      return <strong>Loading</strong>;
 
     if (!events.length)
       return null;
@@ -27,7 +26,7 @@ class EventList extends React.Component<IProps, {}> {
       <Style>{styles}</Style>
       <ul>
         {events.map(event =>
-          <li key={event.id}><EventItem event={event} /></li>
+          <li key={event.id}>{event.name}</li>
         )}
       </ul>
     </div>;
@@ -35,4 +34,5 @@ class EventList extends React.Component<IProps, {}> {
 
 }
 
-export default withStore(observer(EventList));
+// TODO(tim): We should be able to apply these two HOCs as class decorators.
+export default Mescy.inject(Store)(observer(EventList));

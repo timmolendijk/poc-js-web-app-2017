@@ -1,44 +1,69 @@
-import { observable } from 'mobx';
+import { observable, computed } from 'mobx';
 import { reportOnError } from 'error';
-import { IIdentity, Normalizer } from 'normalize';
-import { IAwaitable, awaitProps } from 'await';
 import { ITransport, isTransportError } from 'transport';
+import * as Mescy from 'mescy';
 import { Event } from 'models';
 
-export default class EventListStore implements IAwaitable {
+interface IProps {
+  events: Array<Mescy.IReference>;
+  loading: boolean;
+}
 
-  constructor({ events = [] }: { events?: ReadonlyArray<IIdentity> } = {}, normalizer: Normalizer) {
-    this.events = events.map(identity => normalizer.instance<Event>(identity));
-    this.transport = new Event.Transport(data => normalizer.instance<Event>(Event, data));
+export default class EventListStore {
+
+  static defaultProps: IProps = {
+    events: [],
+    loading: false
+  };
+
+  constructor(readonly state: Mescy.Container) {}
+
+  private readonly _props = Object.assign({}, (this.constructor as any).defaultProps);
+  private get props(): IProps {
+    return this.state.getProps(this) || this._props;
   }
 
-  @observable private events: Array<Event>;
-  private readonly transport: ITransport<Event>;
+  @computed get events(): ReadonlyArray<Event> {
+    if (!this.props.events.length && !this.props.loading)
+      setTimeout(() => reportOnError(this.load()));
+    return this.props.events.map(ref => {
+      return this.state.getComponent(ref) as Event;
+    });
+  }
 
-  get(): ReadonlyArray<Event> {
-    if (!this.events.length)
-      reportOnError(this.load());
-
-    // TODO(tim): Can we get rid of this silly type assertion?
-    return (this.events as any).peek();
+  @computed get loading() {
+    return this.props.loading;
   }
 
   private async load() {
-    const page = this.transport.list();
+    this.startLoad();
+    const transport: ITransport<Event> = new Event.Transport;
+    const page = transport.list();
     let instances;
     try {
       instances = await page;
     } catch (err) {
+      console.log(err);
       if (isTransportError(err))
         return;
       throw err;
     }
-
-    this.events = instances;
+    this.endLoad(instances);
   }
 
-  get await() {
-    return awaitProps(this);
+  // TODO(tim): ??
+  // private startLoad2 = this.state.makeAction(() => {
+  //   this.props.loading = true;
+  // });
+
+  @Mescy.action private startLoad() {
+    this.props.loading = true;
+  }
+  @Mescy.action private endLoad(events: ReadonlyArray<Event>) {
+    this.props.events = events.map(event => this.state.persistComponent(event));
+    this.props.loading = false;
   }
 
 }
+
+Mescy.registerType(EventListStore);

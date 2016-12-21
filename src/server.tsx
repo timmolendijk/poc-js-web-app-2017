@@ -3,7 +3,7 @@ import * as React from 'react';
 import { renderToString } from 'react-dom/server';
 import { useStaticRendering } from 'mobx-react';
 import { ServerRouter, createServerRenderContext } from 'react-router';
-import { State } from 'state';
+import * as Mescy from 'mescy';
 import { IBaseConstructor } from './components/Base';
 import DynamicBase from './components/DynamicBase';
 import AmpBase from './components/AmpBase';
@@ -13,7 +13,7 @@ useStaticRendering(true);
 // Middleware for serving resources of a single type.
 const renderOnMatch = (Base: IBaseConstructor) => async function (context, next) {
 
-  const state = new State();
+  const state = new Mescy.Container();
 
   const renderContext = createServerRenderContext();
 
@@ -26,7 +26,7 @@ const renderOnMatch = (Base: IBaseConstructor) => async function (context, next)
   let renderCount = 0;
   while (true) {
     renderCount++;
-    html = Base.renderToDocument(renderComponent, state);
+    html = Base.renderToMarkup(renderComponent, state);
     const awaiting = state.await;
     if (!(awaiting instanceof Promise))
       break;
