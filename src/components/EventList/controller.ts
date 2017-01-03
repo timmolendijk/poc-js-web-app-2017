@@ -1,8 +1,7 @@
-import { oldField, field, observable, getContainer, getUntrackedField, setUntrackedField } from 'state';
+import { oldField, field, observable } from 'state';
 import { reportOnError } from 'error';
 import { ITransport, isTransportError } from 'transport';
 import { Event } from 'models';
-import { pick } from 'lodash';
 
 export default class EventListController {
 
