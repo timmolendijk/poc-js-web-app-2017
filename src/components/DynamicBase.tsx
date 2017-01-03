@@ -4,13 +4,13 @@ import { Match, Miss } from 'react-router';
 import * as Helmet from 'react-helmet';
 import DevTool from 'mobx-react-devtools';
 import { ServerStyled } from 'style';
-import * as Mescy from 'mescy';
+import { Container } from 'state';
 import Base from './Base';
 import Page from './Page';
 import EventList from './EventList';
 import NotFound from './NotFound';
 
-export default class DynamicBase extends React.Component<{ state: Mescy.Container }, {}> {
+export default class DynamicBase extends React.Component<{ state: Container }, {}> {
 
   private renderDevTools() {
     if (process.env.NODE_ENV !== 'development')
@@ -29,7 +29,7 @@ export default class DynamicBase extends React.Component<{ state: Mescy.Containe
     </Base>;
   }
 
-  static renderToMarkup(component, state: Mescy.Container) {
+  static renderToMarkup(component, state: Container) {
     const renderedComponent = renderToStaticMarkup(
       <ServerStyled clientContainerId="root" serialize={true}>
         {component}

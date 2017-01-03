@@ -3,13 +3,13 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { Match, Miss } from 'react-router';
 import * as Helmet from 'react-helmet';
 import { ServerStyled } from 'style';
-import * as Mescy from 'mescy';
+import { Container } from 'state';
 import Base from './Base';
 import Page from './Page';
 import Event from './Event';
 import NotFound from './NotFound';
 
-export default class AmpBase extends React.Component<{ state: Mescy.Container }, {}> {
+export default class AmpBase extends React.Component<{ state: Container }, {}> {
 
   render() {
     const ampStandardLib = {
@@ -26,7 +26,7 @@ export default class AmpBase extends React.Component<{ state: Mescy.Container },
     </Base>;
   }
 
-  static renderToMarkup(component, state?: Mescy.Container) {
+  static renderToMarkup(component, state?: Container) {
     const renderedComponent = renderToStaticMarkup(
       <ServerStyled singleton={{ 'amp-custom': undefined }}>
         {component}

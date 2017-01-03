@@ -1,9 +1,10 @@
 import * as Koa from 'koa';
 import * as React from 'react';
 import { renderToString } from 'react-dom/server';
+import { createStore } from 'redux';
 import { useStaticRendering } from 'mobx-react';
 import { ServerRouter, createServerRenderContext } from 'react-router';
-import * as Mescy from 'mescy';
+import { Container } from 'state';
 import { IBaseConstructor } from './components/Base';
 import DynamicBase from './components/DynamicBase';
 import AmpBase from './components/AmpBase';
@@ -13,7 +14,8 @@ useStaticRendering(true);
 // Middleware for serving resources of a single type.
 const renderOnMatch = (Base: IBaseConstructor) => async function (context, next) {
 
-  const state = new Mescy.Container();
+  const state = new Container();
+  createStore(state => state || {}, state.enhancer);
 
   const renderContext = createServerRenderContext();
 
