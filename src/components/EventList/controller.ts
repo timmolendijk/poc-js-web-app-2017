@@ -1,4 +1,4 @@
-import { field, observable } from 'state';
+import { field, objects, observable } from 'state';
 import { reportOnError } from 'error';
 import { ITransport, isTransportError } from 'transport';
 import { Event } from 'models';
@@ -6,18 +6,11 @@ import { Event } from 'models';
 export default class EventListController {
 
   constructor() {
+    // TODO(tim): Move to some "lazy load" hook on `events` field.
     setTimeout(() => reportOnError(this.load()));
   }
 
-  @observable(field)({
-    dataToValue(refs, hydrate) {
-      return refs.map(hydrate);
-    },
-    valueToData(events, dehydrate) {
-      return events.map(dehydrate);
-    }
-  }) events: ReadonlyArray<Event> = [];
-
+  @observable(objects(field))() events: ReadonlyArray<Event> = [];
   @observable(field)() loading: boolean = false;
 
   async load() {
