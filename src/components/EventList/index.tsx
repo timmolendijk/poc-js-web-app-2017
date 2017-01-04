@@ -18,12 +18,12 @@ export default class EventList extends React.Component<IProps & { controller: Co
 
     if (!events.length)
       return null;
-
+    
     return <div className="EventList">
       <Style>{styles}</Style>
       <ul>
         {events.map(event =>
-          <li key={event.id}>{event.name}</li>
+          <li key={event.id}>{event.name} ({event.startMoment.format("dddd, MMMM Do YYYY")})</li>
         )}
       </ul>
     </div>;

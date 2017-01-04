@@ -1,11 +1,11 @@
-import { oldField, field, observable } from 'state';
+import { field, observable } from 'state';
 import { reportOnError } from 'error';
 import { ITransport, isTransportError } from 'transport';
 import { Event } from 'models';
 
 export default class EventListController {
 
-  constructor(data?) {
+  constructor() {
     setTimeout(() => reportOnError(this.load()));
   }
 
