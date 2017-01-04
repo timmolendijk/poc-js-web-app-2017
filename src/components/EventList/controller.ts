@@ -1,4 +1,4 @@
-import { field, objects, observable } from 'state';
+import { action, field, objects, observable } from 'state';
 import { reportOnError } from 'error';
 import { ITransport, isTransportError } from 'transport';
 import { Event } from 'models';
@@ -14,7 +14,7 @@ export default class EventListController {
   @observable(field)() loading: boolean = false;
 
   async load() {
-    this.loading = true;
+    this.startLoad();
 
     const transport: ITransport<Event> = new Event.Transport;
     const page = transport.list();
@@ -27,7 +27,17 @@ export default class EventListController {
       throw err;
     }
 
-    this.events = instances;
+    this.endLoad(instances);
+  }
+
+  @action
+  startLoad() {
+    this.loading = true;
+  }
+
+  @action
+  endLoad(events) {
+    this.events = events;
     this.loading = false;
   }
 

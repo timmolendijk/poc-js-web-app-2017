@@ -18,7 +18,7 @@ export default class EventList extends React.Component<IProps & { controller: Co
 
     if (!events.length)
       return null;
-    
+
     return <div className="EventList">
       <Style>{styles}</Style>
       <ul>
