@@ -8,6 +8,7 @@ import { Container } from 'state';
 import Base from './Base';
 import Page from './Page';
 import EventList from './EventList';
+import Search from './Search';
 import NotFound from './NotFound';
 
 export default class DynamicBase extends React.Component<{ state: Container }, {}> {
@@ -24,6 +25,7 @@ export default class DynamicBase extends React.Component<{ state: Container }, {
       {this.renderDevTools()}
       <Page>
         <Match exactly pattern="/events" component={EventList} />
+        <Match exactly pattern="/search" component={Search} />
         <Miss component={NotFound} />
       </Page>
     </Base>;

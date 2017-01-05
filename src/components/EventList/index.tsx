@@ -11,10 +11,12 @@ interface IProps {}
 export default class EventList extends React.Component<IProps & { controller: Controller }, {}> {
 
   render() {
-    const { events, loading } = this.props.controller;
+    const { controller } = this.props;
 
-    if (loading)
+    if (controller.loading)
       return <strong>Loading</strong>;
+    
+    const events = controller.getEvents();
 
     if (!events.length)
       return null;

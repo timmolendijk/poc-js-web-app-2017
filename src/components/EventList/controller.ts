@@ -6,15 +6,17 @@ import { Event } from 'models';
 
 export default class EventListController implements IAwaitable {
 
-  @observable(objects(field))({
-    // TODO(tim): This feels like an ugly silly lazy loading construct.
-    onGet(value) {
-      if (value && value.length > 0 || this.loading)
-        return;
-      reportOnError(this.load());
-    }
-  }) events: ReadonlyArray<Event> = [];
+  @observable(objects(field))() private events: ReadonlyArray<Event>;
   @observable(field)() loading: boolean = false;
+
+  getEvents() {
+    if (!this.events && !this.loading)
+      reportOnError(this.load());
+
+    // TODO(tim): Do not substitute `undefined` for empty array to remain
+    // explicit about difference between no data and empty list?
+    return this.events || [];
+  }
 
   private readonly transport: ITransport<Event> & IAwaitable = new Event.Transport;
 
