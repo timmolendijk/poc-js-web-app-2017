@@ -1,7 +1,8 @@
+import { when } from 'mobx';
 import { IAwaitable } from 'await';
 import { action, field, objects, observable } from 'state';
 import { reportOnError } from 'error';
-import { ITransport, isTransportError } from 'transport';
+import { isTransportError } from 'transport';
 import { Event } from 'models';
 
 export default class EventListController implements IAwaitable {
@@ -18,12 +19,10 @@ export default class EventListController implements IAwaitable {
     return this.events || [];
   }
 
-  private readonly transport: ITransport<Event> & IAwaitable = new Event.Transport;
-
   async load() {
     this.startLoad();
 
-    const page = this.transport.list();
+    const page = Event.transport.list();
     let instances;
     try {
       instances = await page;
@@ -48,7 +47,14 @@ export default class EventListController implements IAwaitable {
   }
 
   get await() {
-    return this.transport.await;
+    if (!this.loading)
+      return;
+    return new Promise(resolve =>
+      when(
+        () => !this.loading,
+        resolve
+      )
+    );
   }
 
 }

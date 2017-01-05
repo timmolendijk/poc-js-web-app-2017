@@ -1,9 +1,9 @@
 import { debounce } from 'lodash';
-import { reaction } from 'mobx';
+import { reaction, when } from 'mobx';
 import { IAwaitable } from 'await';
 import { action, field, objects, observable } from 'state';
 import { reportOnError } from 'error';
-import { ITransport, isTransportError } from 'transport';
+import { isTransportError } from 'transport';
 import { Author } from 'models';
 
 export default class SearchController implements IAwaitable {
@@ -28,8 +28,6 @@ export default class SearchController implements IAwaitable {
     return this.authors || [];
   }
 
-  private readonly transport: ITransport<Author> & IAwaitable = new Author.Transport;
-
   async load(query) {
     this.startLoad();
 
@@ -37,7 +35,7 @@ export default class SearchController implements IAwaitable {
 
     query = query.trim();
     if (query) {
-      const page = this.transport.list({ query });
+      const page = Author.transport.list({ query });
       try {
         instances = await page;
       } catch (err) {
@@ -62,7 +60,14 @@ export default class SearchController implements IAwaitable {
   }
 
   get await() {
-    return this.transport.await;
+    if (!this.loading)
+      return;
+    return new Promise(resolve =>
+      when(
+        () => !this.loading,
+        resolve
+      )
+    );
   }
 
 }
