@@ -12,10 +12,10 @@ const state = new Container();
 
 let enhancer = state.enhancer;
 
-if (process.env.NODE_ENV === 'development') {
-  if (w.__REDUX_DEVTOOLS_EXTENSION__)
-    enhancer = compose(enhancer, w.__REDUX_DEVTOOLS_EXTENSION__());
-}
+// if (process.env.NODE_ENV === 'development') {
+//   if (w.__REDUX_DEVTOOLS_EXTENSION__)
+//     enhancer = compose(enhancer, w.__REDUX_DEVTOOLS_EXTENSION__());
+// }
 
 createStore(state => state || {}, w.__STATE__, enhancer);
 
