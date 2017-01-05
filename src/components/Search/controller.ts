@@ -17,6 +17,9 @@ export default class SearchController implements IAwaitable {
     this.disposeLoader = this.disposeLoader ||
       reaction(
         () => this.query,
+        // TODO(tim): This should only automatically reload results if query
+        // change directly follows from an `onChange` on the input field, or
+        // else we are breaking time travel.
         debounce(query => this.load(query), 300)
       );
 
