@@ -1,8 +1,0 @@
-.Search {
-  border-top: 3px solid orange;
-}
-
-.Search > input {
-  box-sizing: border-box;
-  width: 100%;
-}

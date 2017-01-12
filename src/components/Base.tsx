@@ -1,10 +1,11 @@
 import * as styles from './Base.css';
 import * as React from 'react';
+import { Store } from 'redux';
+import { Provider } from 'react-redux';
 import { Style } from 'style';
-import { Container, Provider } from 'state';
 
 interface IProps {
-  state: Container;
+  store: Store<any>;
   children?: any;
 }
 
@@ -13,12 +14,12 @@ export interface IBaseConstructor {
   renderToMarkup(component, state): string;
 }
 
-export default function Base({ state, children }: IProps) {
+export default function Base({ store, children }: IProps) {
 
   return <div>
     <Style>{styles}</Style>
-    <Provider state={state}>
-      {children}
+    <Provider store={store}>
+      <div>{children}</div>
     </Provider>
   </div>;
 }

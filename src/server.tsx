@@ -2,9 +2,10 @@ import * as Koa from 'koa';
 import * as React from 'react';
 import { renderToString } from 'react-dom/server';
 import { createStore } from 'redux';
-import { useStaticRendering } from 'mobx-react';
 import { ServerRouter, createServerRenderContext } from 'react-router';
-import { Container } from 'state';
+import { useStaticRendering } from 'mobx-react';
+import { getPending } from 'scoopy';
+import { reducer } from 'scoopy/store';
 import { IBaseConstructor } from './components/Base';
 import DynamicBase from './components/DynamicBase';
 import AmpBase from './components/AmpBase';
@@ -14,25 +15,24 @@ useStaticRendering(true);
 // Middleware for serving resources of a single type.
 const renderOnMatch = (Base: IBaseConstructor) => async function (context, next) {
 
-  const state = new Container();
-  createStore(state => state || {}, state.enhancer);
+  const store = createStore(reducer);
 
   const renderContext = createServerRenderContext();
 
   const renderComponent =
     <ServerRouter location={context.url} context={renderContext}>
-      <Base state={state} />
+      <Base store={store} />
     </ServerRouter>;
   
   let html;
   let renderCount = 0;
   while (true) {
     renderCount++;
-    html = Base.renderToMarkup(renderComponent, state);
-    const awaiting = state.await;
-    if (!(awaiting instanceof Promise))
+    html = Base.renderToMarkup(renderComponent, store);
+    const pending = getPending(store);
+    if (!(pending instanceof Promise))
       break;
-    await awaiting;
+    await pending;
   }
 
   const { redirect, missed } = renderContext.getResult();
