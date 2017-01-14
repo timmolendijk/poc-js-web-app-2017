@@ -14,6 +14,9 @@ class Controller {
   @observable private events: ReadonlyArray<Event>;
   @observable loading: boolean = false;
 
+  // TODO(tim): It would be nice if we can define type of `fallback` as
+  // "anything, but if it is an array it should be holding instances of
+  // `Event`".
   getEvents<F>(fallback: F = null) {
     if (!this.events && !this.loading)
       reportOnError(this.load());
