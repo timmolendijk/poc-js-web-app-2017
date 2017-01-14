@@ -4,8 +4,7 @@ import { renderToString } from 'react-dom/server';
 import { createStore } from 'redux';
 import { ServerRouter, createServerRenderContext } from 'react-router';
 import { useStaticRendering } from 'mobx-react';
-import { resetNextId, getPending } from 'scoopy';
-import { reducer } from 'scoopy/store';
+import { storeEnhancer, resetNextId, getPending } from 'scoopy';
 import { IBaseConstructor } from './components/Base';
 import DynamicBase from './components/DynamicBase';
 import AmpBase from './components/AmpBase';
@@ -15,7 +14,7 @@ useStaticRendering(true);
 // Middleware for serving resources of a single type.
 const renderOnMatch = (Base: IBaseConstructor) => async function (context, next) {
 
-  const store = createStore(reducer);
+  const store = createStore(state => state || {}, storeEnhancer);
 
   const renderContext = createServerRenderContext();
 
@@ -38,13 +37,14 @@ const renderOnMatch = (Base: IBaseConstructor) => async function (context, next)
 
   const { redirect, missed } = renderContext.getResult();
 
-  // TODO(tim): Report behavior only in development mode.
-  let conclusion = "serve";
-  if (redirect)
-    conclusion = `redirect to ${redirect.pathname}`;
-  else if (missed)
-    conclusion = "no match";
-  console.log(`${context.url} → ${Base.name} rendered ${renderCount} ✕ to reach stable state: ${conclusion}`);
+  if (process.env.NODE_ENV == 'development') {
+    let conclusion = "serve";
+    if (redirect)
+      conclusion = `redirect to ${redirect.pathname}`;
+    else if (missed)
+      conclusion = "no match";
+    console.log(`${context.url} → ${Base.name} rendered ${renderCount} ✕ to reach stable state: ${conclusion}`);
+  }
 
   if (redirect)
     return context.redirect(redirect.pathname);
@@ -82,5 +82,6 @@ server.listen(3000, 'localhost', function (err, result) {
     console.error(err);
   }
 
-  console.log('Server listening at localhost:3000');
+  if (process.env.NODE_ENV == 'development')
+    console.log('Server listening at localhost:3000');
 });

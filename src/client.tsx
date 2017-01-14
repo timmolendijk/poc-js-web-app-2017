@@ -3,20 +3,19 @@ import { render } from 'react-dom';
 import { BrowserRouter } from 'react-router';
 import { compose, createStore } from 'redux';
 import { ClientStyled } from 'style';
-import { reducer } from 'scoopy/store';
+import { storeEnhancer } from 'scoopy';
 import DynamicBase from './components/DynamicBase';
 
 const w = window as any;
 
-let enhancer;
+let enhancer = storeEnhancer;
 
 if (process.env.NODE_ENV == 'development') {
   if (w.__REDUX_DEVTOOLS_EXTENSION__)
-    enhancer = w.__REDUX_DEVTOOLS_EXTENSION__();
-    // enhancer = compose(enhancer, w.__REDUX_DEVTOOLS_EXTENSION__());
+    enhancer = compose(enhancer, w.__REDUX_DEVTOOLS_EXTENSION__());
 }
 
-const store = createStore(reducer, w.__STORE__, enhancer);
+const store = createStore(state => state || {}, w.__STORE__, enhancer);
 
 render(
   <ClientStyled>

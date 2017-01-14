@@ -4,7 +4,6 @@ import { createStore, Store } from 'redux';
 import { computed } from 'mobx';
 import { observer } from 'mobx-react';
 import { field, pending } from 'scoopy';
-import { reducer } from 'scoopy/store';
 import { observable } from 'scoopy-mobx';
 import { reportOnError } from 'error';
 import { isTransportError } from 'transport';
@@ -95,7 +94,8 @@ class Controller {
       return null;
     
     return <p>
-      {this.props.event.pageUrl} / {this.props.event.venueName}
+      {this.props.event.pageUrl}<br />
+      {this.props.event.venueName}
     </p>;
   }
 
