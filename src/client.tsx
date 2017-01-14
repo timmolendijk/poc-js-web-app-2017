@@ -16,7 +16,7 @@ if (process.env.NODE_ENV == 'development') {
     // enhancer = compose(enhancer, w.__REDUX_DEVTOOLS_EXTENSION__());
 }
 
-const store = createStore(reducer/*, w.__STORE__*/, enhancer);
+const store = createStore(reducer, w.__STORE__, enhancer);
 
 render(
   <ClientStyled>

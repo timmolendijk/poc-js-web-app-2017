@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import { createStore, Store } from 'redux';
 import { computed } from 'mobx';
 import { observer } from 'mobx-react';
-import { field } from 'scoopy';
+import { field, pending } from 'scoopy';
 import { reducer } from 'scoopy/store';
 import { observable } from 'scoopy-mobx';
 import { reportOnError } from 'error';
@@ -17,19 +17,19 @@ class Controller {
 
   getEvents(fallback = null) {
     if (!this.events && !this.loading)
-      // TODO(tim): Side-effect cannot be initiated synchronously because it
-      // would result in a re-render being ordered while current render has not
-      // yet ended. One may argue that triggering side-effects from a render are
-      // an anti-pattern, but I cannot see how lazy-loading can be implemented
-      // otherwise and I do not consider lazy-loading server-fetched data an
-      // anti-pattern in itself.
-      setTimeout(() => reportOnError(this.load()));
+      reportOnError(this.load());
     
     return this.events || fallback;
   }
 
-  private async load() {
-    this.loading = true;
+  @pending private async load() {
+    // TODO(tim): Side-effect mutations cannot be performed synchronously
+    // because it would result in a re-render being ordered while current render
+    // has not yet ended. One may argue that triggering side-effects from a
+    // render is an anti-pattern, but I cannot see how lazy-loading can be
+    // implemented otherwise and I do not consider lazy-loading server-fetched
+    // data an anti-pattern in itself.
+    setTimeout(() => this.loading = true);
 
     const page = Event.transport.list();
     let instances;

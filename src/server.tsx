@@ -4,7 +4,7 @@ import { renderToString } from 'react-dom/server';
 import { createStore } from 'redux';
 import { ServerRouter, createServerRenderContext } from 'react-router';
 import { useStaticRendering } from 'mobx-react';
-import { getPending } from 'scoopy';
+import { resetNextId, getPending } from 'scoopy';
 import { reducer } from 'scoopy/store';
 import { IBaseConstructor } from './components/Base';
 import DynamicBase from './components/DynamicBase';
@@ -28,6 +28,7 @@ const renderOnMatch = (Base: IBaseConstructor) => async function (context, next)
   let renderCount = 0;
   while (true) {
     renderCount++;
+    resetNextId(store);
     html = Base.renderToMarkup(renderComponent, store);
     const pending = getPending(store);
     if (!(pending instanceof Promise))
