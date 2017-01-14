@@ -72,9 +72,31 @@ class Controller {
     
     return <ul>
       {this.controller.getEvents([]).map(event =>
-        <li key={event.id}>{event.name}</li>
+        <li key={event.id}><EventItem event={event} /></li>
       )}
     </ul>;
+  }
+
+}
+
+@observer class EventItem extends React.Component<{ event: Event }, {}> {
+
+  @observable private isExpanded: boolean = false;
+
+  render() {
+    return <div onClick={() => this.isExpanded = true}>
+      <p>{this.props.event.name}</p>
+      {this.renderExpanded()}
+    </div>;
+  }
+
+  private renderExpanded() {
+    if (!this.isExpanded)
+      return null;
+    
+    return <p>
+      {this.props.event.pageUrl} / {this.props.event.venueName}
+    </p>;
   }
 
 }
