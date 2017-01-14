@@ -14,7 +14,7 @@ class Controller {
   @observable private events: ReadonlyArray<Event>;
   @observable loading: boolean = false;
 
-  getEvents(fallback = null) {
+  getEvents<F>(fallback: F = null) {
     if (!this.events && !this.loading)
       reportOnError(this.load());
     
@@ -70,15 +70,15 @@ class Controller {
       return <p>LOADING…</p>;
     
     return <ul>
-      {this.controller.getEvents([]).map(event =>
-        <li key={event.id}><EventItem event={event} /></li>
+      {this.controller.getEvents([] as ReadonlyArray<Event>).map(event =>
+        <li key={event.id}><EventItem id={event.id} event={event} /></li>
       )}
     </ul>;
   }
 
 }
 
-@observer class EventItem extends React.Component<{ event: Event }, {}> {
+@observer class EventItem extends React.Component<{ id, event: Event }, {}> {
 
   @observable private isExpanded: boolean = false;
 
