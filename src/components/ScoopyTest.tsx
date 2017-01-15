@@ -1,10 +1,13 @@
+import * as styles from './ScoopyTest.css';
 import { createElement, Component } from 'react';
 import { Provider } from 'react-redux';
+import { Style } from 'react-style';
 import { createStore, Store } from 'redux';
 import { computed } from 'mobx';
 import { observer } from 'mobx-react';
 import { IIdentifier, field, pending } from 'scoopy';
 import { observable } from 'scoopy-mobx';
+import * as classNames from 'classnames';
 import { reportOnError } from 'error';
 import { isTransportError } from 'transport';
 import { Event } from 'models';
@@ -64,15 +67,15 @@ class Controller {
       <h1>{this.loudCheer} SCOOPY!</h1>
       <button type="button" onClick={() => this.cheer = "yay"}>yay</button>
       <button type="button" onClick={() => this.cheer = "aitait"}>aitait</button>
-      {this.renderEvents()}
+      {this.renderEventList()}
     </div>;
   }
 
-  private renderEvents() {
+  private renderEventList() {
     if (this.controller.loading)
       return <p>LOADING…</p>;
     
-    return <ul>
+    return <ul className="EventList">
       {this.controller.getEvents([] as ReadonlyArray<Event>).map(event =>
         <li key={event.id}><EventItem id={event.id} event={event} /></li>
       )}
@@ -81,12 +84,43 @@ class Controller {
 
 }
 
+class EventItemController {
+
+  @observable private expanded: ReadonlyArray<Event> = [];
+
+  isExpanded(event: Event): boolean {
+    return this.expanded.indexOf(event) !== -1;
+  }
+
+  expand(event: Event) {
+    const expanded = new Set(this.expanded);
+    expanded.add(event);
+    this.expanded = [...expanded];
+  }
+
+  collapse(event: Event) {
+    const expanded = new Set(this.expanded);
+    expanded.delete(event);
+    this.expanded = [...expanded];
+  }
+
+}
+
 @observer class EventItem extends Component<{ id: IIdentifier, event: Event }, {}> {
 
-  @observable private isExpanded: boolean = false;
+  @field private controller = new EventItemController();
+
+  @computed get isExpanded(): boolean {
+    return this.controller.isExpanded(this.props.event);
+  }
+  set isExpanded(value: boolean) {
+    this.controller[value ? 'expand' : 'collapse'](this.props.event);
+  }
 
   render() {
-    return <div onClick={() => this.isExpanded = true}>
+    const className = classNames('EventItem', { expanded: this.isExpanded });
+    return <div onClick={() => this.isExpanded = true} className={className}>
+      <Style>{styles}</Style>
       <p>{this.props.event.name}</p>
       {this.renderExpanded()}
     </div>;

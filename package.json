@@ -40,6 +40,7 @@
   },
   "dependencies": {
     "@types/lodash": "^4.14.38",
+    "classnames": "^2.2.5",
     "es6-promisify": "^5.0.0",
     "history": "^4.3.0",
     "isomorphic-fetch": "^2.2.1",
