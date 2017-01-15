@@ -7,7 +7,10 @@ process.env.RUN_ENV = 'server';
 
 module.exports = {
   devtool: 'eval',
-  entry: './src/server',
+  entry: [
+    './src/env',
+    './src/server'
+  ],
   output: {
     path: path.join(__dirname, 'dist'),
     filename: 'server.js',

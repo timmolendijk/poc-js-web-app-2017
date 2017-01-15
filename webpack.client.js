@@ -9,6 +9,7 @@ module.exports = {
   devtool: 'eval',
   entry: [
     'webpack-dev-server/client?http://localhost:3001',
+    './src/env',
     './src/client'
   ],
   output: {

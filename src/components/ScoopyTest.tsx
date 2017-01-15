@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import { createStore, Store } from 'redux';
 import { computed } from 'mobx';
 import { observer } from 'mobx-react';
-import { field, pending } from 'scoopy';
+import { IIdentifier, field, pending } from 'scoopy';
 import { observable } from 'scoopy-mobx';
 import { reportOnError } from 'error';
 import { isTransportError } from 'transport';
@@ -81,7 +81,7 @@ class Controller {
 
 }
 
-@observer class EventItem extends React.Component<{ id, event: Event }, {}> {
+@observer class EventItem extends React.Component<{ id: IIdentifier, event: Event }, {}> {
 
   @observable private isExpanded: boolean = false;
 
