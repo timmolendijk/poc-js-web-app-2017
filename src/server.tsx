@@ -4,7 +4,7 @@ import { renderToString } from 'react-dom/server';
 import { ServerRouter, createServerRenderContext } from 'react-router';
 import { useStaticRendering } from 'mobx-react';
 import { createStore } from 'redux';
-import { storeEnhancer, resetNextId, getPending } from 'scoopy';
+import { storeEnhancer, resetRender, getPending } from 'scoopy';
 import { IBaseConstructor } from './components/Base';
 import DynamicBase from './components/DynamicBase';
 import AmpBase from './components/AmpBase';
@@ -27,12 +27,12 @@ const renderOnMatch = (Base: IBaseConstructor) => async function (context, next)
   let renderCount = 0;
   while (true) {
     renderCount++;
-    resetNextId(store);
     html = Base.renderToMarkup(renderComponent, store);
     const pending = getPending(store);
     if (!(pending instanceof Promise))
       break;
     await pending;
+    resetRender(store);
   }
 
   const { redirect, missed } = renderContext.getResult();
