@@ -1,10 +1,10 @@
-import * as React from 'react';
+import { createElement, Component } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Match, Miss } from 'react-router';
 import * as Helmet from 'react-helmet';
 import { Store } from 'redux';
 import DevTool from 'mobx-react-devtools';
-import { ServerStyled } from 'style';
+import { ServerStyled } from 'react-style';
 import Base from './Base';
 import Page from './Page';
 // import EventList from './EventList';
@@ -12,7 +12,7 @@ import Page from './Page';
 import ScoopyTest from './ScoopyTest';
 import NotFound from './NotFound';
 
-export default class DynamicBase extends React.Component<{ store: Store<any> }, {}> {
+export default class DynamicBase extends Component<{ store: Store<any> }, {}> {
 
   private renderDevTools() {
     if (process.env.NODE_ENV != 'development')

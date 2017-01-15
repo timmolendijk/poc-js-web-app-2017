@@ -1,8 +1,8 @@
 import * as styles from './Base.css';
-import * as React from 'react';
+import { createElement, Component } from 'react';
 import { Store } from 'redux';
 import { Provider } from 'react-redux';
-import { Style } from 'style';
+import { Style } from 'react-style';
 
 interface IProps {
   store: Store<any>;
@@ -10,7 +10,7 @@ interface IProps {
 }
 
 export interface IBaseConstructor {
-  new (props: IProps): React.Component<IProps, {}>;
+  new (props: IProps): Component<IProps, {}>;
   renderToMarkup(component, state): string;
 }
 

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { createElement, Component } from 'react';
 import { Provider } from 'react-redux';
 import { createStore, Store } from 'redux';
 import { computed } from 'mobx';
@@ -49,7 +49,7 @@ class Controller {
 
 }
 
-@observer export default class ScoopyTest extends React.Component<{}, {}> {
+@observer export default class ScoopyTest extends Component<{}, {}> {
 
   @field private controller = new Controller();
   
@@ -81,7 +81,7 @@ class Controller {
 
 }
 
-@observer class EventItem extends React.Component<{ id: IIdentifier, event: Event }, {}> {
+@observer class EventItem extends Component<{ id: IIdentifier, event: Event }, {}> {
 
   @observable private isExpanded: boolean = false;
 

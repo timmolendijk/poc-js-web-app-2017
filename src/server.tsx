@@ -1,9 +1,9 @@
 import * as Koa from 'koa';
-import * as React from 'react';
+import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
-import { createStore } from 'redux';
 import { ServerRouter, createServerRenderContext } from 'react-router';
 import { useStaticRendering } from 'mobx-react';
+import { createStore } from 'redux';
 import { storeEnhancer, resetNextId, getPending } from 'scoopy';
 import { IBaseConstructor } from './components/Base';
 import DynamicBase from './components/DynamicBase';

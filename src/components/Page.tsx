@@ -1,7 +1,7 @@
 import * as styles from './Page.css';
-import * as React from 'react';
+import { createElement } from 'react';
 import * as Helmet from 'react-helmet';
-import { Style } from 'style';
+import { Style } from 'react-style';
 
 const title = "AmsterdamJS";
 

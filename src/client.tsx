@@ -1,8 +1,8 @@
-import * as React from 'react';
+import { createElement } from 'react';
 import { render } from 'react-dom';
 import { BrowserRouter } from 'react-router';
+import { ClientStyled } from 'react-style';
 import { compose, createStore } from 'redux';
-import { ClientStyled } from 'style';
 import { storeEnhancer } from 'scoopy';
 import DynamicBase from './components/DynamicBase';
 

@@ -1,8 +1,8 @@
 import * as styles from './Home.css';
 import * as brandUrl from './brand.png';
-import * as React from 'react';
+import { createElement } from 'react';
 import { Link } from 'react-router';
-import { Style } from 'style';
+import { Style } from 'react-style';
 
 export default function Home() {
 

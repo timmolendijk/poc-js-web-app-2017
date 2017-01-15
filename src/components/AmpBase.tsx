@@ -1,15 +1,15 @@
-import * as React from 'react';
+import { createElement, Component } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Match, Miss } from 'react-router';
 import * as Helmet from 'react-helmet';
 import { Store } from 'redux';
-import { ServerStyled } from 'style';
+import { ServerStyled } from 'react-style';
 import Base from './Base';
 import Page from './Page';
 import Event from './Event';
 import NotFound from './NotFound';
 
-export default class AmpBase extends React.Component<{ store: Store<any> }, {}> {
+export default class AmpBase extends Component<{ store: Store<any> }, {}> {
 
   render() {
     const ampStandardLib = {
