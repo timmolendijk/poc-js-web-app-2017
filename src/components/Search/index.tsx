@@ -8,6 +8,7 @@ import { observable } from 'scoopy-mobx';
 import { reportOnError } from 'error';
 import { isTransportError } from 'transport';
 import { Author } from 'models';
+import Result from './Result';
 
 @observer export default class Search extends Component<{}, {}> {
 
@@ -72,7 +73,7 @@ import { Author } from 'models';
     
     return <ul>
       {(this.authors || []).map(author =>
-        <li key={author.id}>{author.name}</li>
+        <li key={author.id}><Result author={author} /></li>
       )}
     </ul>;
   }
