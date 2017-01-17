@@ -47,6 +47,10 @@ class Controller {
     }
 
     this.events = instances;
+    // TODO(tim): Setting loading to false assumes that no two load operations
+    // are running simultaneously, which is an assumption that is by no means
+    // enforced or even encouraged by our interface. So, what we should do
+    // instead is derive loading state from `@pending`.
     this.loading = false;
   }
 
