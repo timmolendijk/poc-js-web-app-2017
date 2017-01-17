@@ -1,0 +1,10 @@
+.Search > form {
+  font-size: 2em;
+}
+
+.Search > form input[type="search"] {
+  -webkit-appearance: none;
+  font-size: inherit;
+  padding: .5em 1em;
+  width: 100%;
+}
