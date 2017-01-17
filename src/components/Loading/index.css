@@ -1,0 +1,44 @@
+.Loading {
+  margin: 0 auto;
+  width: 100px;
+  height: 100px;
+  /* TODO(tim): Can't we just center vertically? */
+  margin-top: 20%;
+}
+
+.Loading svg {
+  animation: rotate 1s linear infinite;
+  transform-origin: center center;
+}
+
+.Loading circle {
+  fill: none;
+  stroke-width: 2;
+  stroke-miterlimit: 10;
+  stroke-dasharray: 1, 200;
+  stroke-dashoffset: 0;
+  animation: dash 1.5s ease-in-out infinite;
+  stroke: burlywood;
+  stroke-linecap: round;
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dash {
+  0% {
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 89, 200;
+    stroke-dashoffset: -35px;
+  }
+  100% {
+    stroke-dasharray: 89, 200;
+    stroke-dashoffset: -124px;
+  }
+}

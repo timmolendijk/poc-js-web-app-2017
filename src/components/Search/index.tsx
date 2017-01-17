@@ -8,13 +8,17 @@ import { observable } from 'scoopy-mobx';
 import { reportOnError } from 'error';
 import { isTransportError } from 'transport';
 import { Author } from 'models';
+import Loading from '../Loading';
 import Result from './Result';
 
 @observer export default class Search extends Component<{}, {}> {
 
   @observable private query: string = "";
 
+  // TODO(tim): We could introduce an interface to represent this "virtual list"
+  // kind of concept.
   @observable private authors: ReadonlyArray<Author>;
+  @observable private authorCount: number;
 
   @observable private pendingLoadCount = 0;
 
@@ -31,18 +35,20 @@ import Result from './Result';
     // data an anti-pattern in itself.
     setTimeout(() => this.pendingLoadCount++);
 
-    const page = Author.transport.list({ query: this.query });
-    let instances;
     try {
-      instances = await page;
-    } catch (err) {
-      if (isTransportError(err))
-        return;
-      throw err;
-    }
 
-    this.authors = instances;
-    this.pendingLoadCount--;
+      const result = await Author.transport.list({ query: this.query });
+
+      // TODO(tim): How do we guarantee response order integrity? Include the
+      // request query on the response?      
+      this.authors = result.slice();
+      this.authorCount = result.size;
+      this.pendingLoadCount--;
+
+    } catch (err) {
+      if (!isTransportError(err))
+        throw err;
+    }
   }
 
   private readonly onSubmitQuery = (e: FormEvent<HTMLFormElement>) => {
@@ -57,6 +63,7 @@ import Result from './Result';
   render() {
     return <div className="Search">
       <Style>{styles}</Style>
+      <h1>Vind je?</h1>
       <form onSubmit={this.onSubmitQuery}>
         <input type="search" value={this.query} onChange={this.onChangeQuery}
           placeholder="Lekker zoeken kil!" />
@@ -69,13 +76,25 @@ import Result from './Result';
 
   private renderResults() {
     if (this.isLoading)
-      return <em>Effe wachten toch?!</em>;
+      return <Loading />;
     
-    return <ul>
-      {(this.authors || []).map(author =>
-        <li key={author.id}><Result author={author} /></li>
-      )}
-    </ul>;
+    if (this.authors == null)
+      return null;
+    
+    if (this.authorCount === 0)
+      return <strong>niemand gevonden gap :(</strong>;
+    
+    return <div>
+      <strong>
+        {this.authors.length} van {this.authorCount} gevonden{" "}
+        {this.authorCount === 1 ? "journalist" : "journalisten"}
+      </strong>
+      <ul>
+        {(this.authors || []).map(author =>
+          <li key={author.id}><Result author={author} /></li>
+        )}
+      </ul>
+    </div>;
   }
 
 }

@@ -1,12 +1,16 @@
+import * as styles from './index.css';
 import { createElement, Component } from 'react';
+import { Style } from 'react-style';
+import { Link } from 'react-router';
 import { observer } from 'mobx-react';
 import { Author } from 'models';
 
 @observer export default class Result extends Component<{ author: Author }, {}> {
 
   render() {
-    return <div>
-      {this.props.author.name}
+    return <div className="Search-Result">
+      <Style>{styles}</Style>
+      <Link to={`https://journa.be/authors/${this.props.author.id}`}>{this.props.author.name}</Link>
     </div>;
   }
 

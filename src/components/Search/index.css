@@ -8,3 +8,8 @@
   padding: .5em 1em;
   width: 100%;
 }
+
+.Search ul {
+  list-style-type: none;
+  padding: 0;
+}
