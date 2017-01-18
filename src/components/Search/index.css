@@ -9,7 +9,11 @@
   width: 100%;
 }
 
-.Search ul {
+.Search .results {
+  margin-top: 1rem;
+}
+
+.Search .results ul {
   list-style-type: none;
   padding: 0;
 }

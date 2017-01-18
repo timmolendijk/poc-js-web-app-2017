@@ -55,7 +55,7 @@ interface Authors extends IVirtualArray<Author> {
 
       const result = await Author.transport.list({ query: this.query });
 
-      if (result.params.query == this.pendingLoads[this.pendingLoads.length - 1])
+      if (result.params.query === this.pendingLoads[this.pendingLoads.length - 1])
         this.authors = Object.assign(result, { query: result.params.query });
       
       // Making sure to unlist the *first* occurence of the query that resulted
@@ -89,7 +89,7 @@ interface Authors extends IVirtualArray<Author> {
         <input type="search" value={this.query} onChange={this.onChangeQuery}
           placeholder="Lekker zoeken kil!" />
       </form>
-      <div>
+      <div className="results">
         {this.renderResults()}
       </div>
     </div>;
@@ -109,7 +109,7 @@ interface Authors extends IVirtualArray<Author> {
       <strong>
         {this.authors.length} van {this.authors.size}{" "}
         {this.authors.size === 1 ? "journalist" : "journalisten"}
-        {" "}gevonden op zoekopdracht “{this.authors.query}” 
+        {" "}gevonden op zoekopdracht “{this.authors.query}”:
       </strong>
       <ul>
         {this.authors.map(author =>
