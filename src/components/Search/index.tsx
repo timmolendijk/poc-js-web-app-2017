@@ -15,9 +15,9 @@ interface Authors extends IVirtualArray<Author> {
   query: string;
 }
 
-@observer export default class Search extends Component<{}, {}> {
+class SearchController {
 
-  @observable private query: string = "";
+  @observable query: string = "";
 
   // TODO(tim): As soon as we support custom properties on array field values,
   // we can replace the following verbosity for a single observable `authors` of
@@ -25,7 +25,7 @@ interface Authors extends IVirtualArray<Author> {
   @observable private loadedAuthors: ReadonlyArray<Author>;
   @observable private authorCount: number;
   @observable private loadedQuery: string;
-  @computed private get authors(): Authors {
+  @computed get authors(): Authors {
     if (this.loadedAuthors == null)
       return;
     return Object.assign(this.loadedAuthors, {
@@ -33,7 +33,7 @@ interface Authors extends IVirtualArray<Author> {
       query: this.loadedQuery
     });
   }
-  private set authors(value: Authors) {
+  set authors(value: Authors) {
     this.loadedAuthors = value;
     this.authorCount = value.size;
     this.loadedQuery = value.query;
@@ -41,11 +41,11 @@ interface Authors extends IVirtualArray<Author> {
 
   @observable private pendingLoads: ReadonlyArray<string> = [];
 
-  @computed private get isLoading() {
+  @computed get isLoading() {
     return this.pendingLoads.length > 0;
   }
 
-  @pending private async load() {
+  @pending async load() {
     // TODO(tim): This entire `try..catch` construct stems from the small
     // requirement of catching transport errors (and leaving others), without
     // losing typing on `result`. This should be less intrusive.
@@ -71,14 +71,20 @@ interface Authors extends IVirtualArray<Author> {
         throw err;
     }
   }
+  
+}
+
+@observer export default class Search extends Component<{}, {}> {
+
+  @field private readonly controller = new SearchController();
 
   private readonly onSubmitQuery = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    reportOnError(this.load());
+    reportOnError(this.controller.load());
   };
 
   private readonly onChangeQuery = (e: FormEvent<HTMLInputElement>) => {
-    this.query = e.currentTarget.value;
+    this.controller.query = e.currentTarget.value;
   };
 
   render() {
@@ -86,7 +92,7 @@ interface Authors extends IVirtualArray<Author> {
       <Style>{styles}</Style>
       <h1>Vind je?</h1>
       <form onSubmit={this.onSubmitQuery}>
-        <input type="search" value={this.query} onChange={this.onChangeQuery}
+        <input type="search" value={this.controller.query} onChange={this.onChangeQuery}
           placeholder="Lekker zoeken kil!" />
       </form>
       <div className="results">
@@ -96,24 +102,26 @@ interface Authors extends IVirtualArray<Author> {
   }
 
   private renderResults() {
-    if (this.isLoading)
+    if (this.controller.isLoading)
       return <Loading />;
     
-    if (this.authors == null)
+    if (this.controller.authors == null)
       return null;
     
-    if (this.authors.size === 0)
+    if (this.controller.authors.size === 0)
       return <strong>niemand gevonden gap :(</strong>;
     
     return <div>
       <strong>
-        {this.authors.length} van {this.authors.size}{" "}
-        {this.authors.size === 1 ? "journalist" : "journalisten"}
-        {" "}gevonden op zoekopdracht “{this.authors.query}”:
+        {this.controller.authors.length} van {this.controller.authors.size}{" "}
+        {this.controller.authors.size === 1 ? "journalist" : "journalisten"}
+        {" "}gevonden op zoekopdracht “{this.controller.authors.query}”:
       </strong>
       <ul>
-        {this.authors.map(author =>
-          <li key={author.id}><Result author={author} /></li>
+        {this.controller.authors.map(author =>
+          <li key={author.id}>
+            <Result author={author} />
+          </li>
         )}
       </ul>
     </div>;
