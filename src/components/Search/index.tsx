@@ -7,9 +7,13 @@ import { IIdentifier, field, pending } from 'scoopy';
 import { observable } from 'scoopy-mobx';
 import { reportOnError } from 'error';
 import { isTransportError } from 'transport';
-import { ICollection, Author } from 'models';
+import { IVirtualArray, Author } from 'models';
 import Loading from '../Loading';
 import Result from './Result';
+
+interface Authors extends IVirtualArray<Author> {
+  query: string;
+}
 
 @observer export default class Search extends Component<{}, {}> {
 
@@ -17,19 +21,22 @@ import Result from './Result';
 
   // TODO(tim): As soon as we support custom properties on array field values,
   // we can replace the following verbosity for a single observable `authors` of
-  // type `ICollection<Author>`.
+  // type `Authors`.
   @observable private loadedAuthors: ReadonlyArray<Author>;
   @observable private authorCount: number;
-  @computed private get authors(): ICollection<Author> {
+  @observable private loadedQuery: string;
+  @computed private get authors(): Authors {
     if (this.loadedAuthors == null)
       return;
     return Object.assign(this.loadedAuthors, {
-      size: this.authorCount
+      size: this.authorCount,
+      query: this.loadedQuery
     });
   }
-  private set authors(value: ICollection<Author>) {
+  private set authors(value: Authors) {
     this.loadedAuthors = value;
     this.authorCount = value.size;
+    this.loadedQuery = value.query;
   }
 
   @observable private pendingLoads: ReadonlyArray<string> = [];
@@ -39,6 +46,9 @@ import Result from './Result';
   }
 
   @pending private async load() {
+    // TODO(tim): This entire `try..catch` construct stems from the small
+    // requirement of catching transport errors (and leaving others), without
+    // losing typing on `result`. This should be less intrusive.
     try {
 
       this.pendingLoads = [...this.pendingLoads, this.query];
@@ -46,7 +56,7 @@ import Result from './Result';
       const result = await Author.transport.list({ query: this.query });
 
       if (result.params.query == this.pendingLoads[this.pendingLoads.length - 1])
-        this.authors = result;
+        this.authors = Object.assign(result, { query: result.params.query });
       
       // Making sure to unlist the *first* occurence of the query that resulted
       // in `result`, because FIFO.
@@ -92,13 +102,14 @@ import Result from './Result';
     if (this.authors == null)
       return null;
     
-    if (this.authorCount === 0)
+    if (this.authors.size === 0)
       return <strong>niemand gevonden gap :(</strong>;
     
     return <div>
       <strong>
-        {this.authors.length} van {this.authorCount} gevonden{" "}
-        {this.authorCount === 1 ? "journalist" : "journalisten"}
+        {this.authors.length} van {this.authors.size}{" "}
+        {this.authors.size === 1 ? "journalist" : "journalisten"}
+        {" "}gevonden op zoekopdracht “{this.authors.query}” 
       </strong>
       <ul>
         {this.authors.map(author =>
