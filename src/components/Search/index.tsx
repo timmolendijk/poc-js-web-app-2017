@@ -7,7 +7,7 @@ import { IIdentifier, field, pending } from 'scoopy';
 import { observable } from 'scoopy-mobx';
 import { reportOnError } from 'error';
 import { isTransportError } from 'transport';
-import { Author } from 'models';
+import { ICollection, Author } from 'models';
 import Loading from '../Loading';
 import Result from './Result';
 
@@ -15,35 +15,46 @@ import Result from './Result';
 
   @observable private query: string = "";
 
-  // TODO(tim): We could introduce an interface to represent this "virtual list"
-  // kind of concept.
-  @observable private authors: ReadonlyArray<Author>;
+  // TODO(tim): As soon as we support custom properties on array field values,
+  // we can replace the following verbosity for a single observable `authors` of
+  // type `ICollection<Author>`.
+  @observable private loadedAuthors: ReadonlyArray<Author>;
   @observable private authorCount: number;
+  @computed private get authors(): ICollection<Author> {
+    if (this.loadedAuthors == null)
+      return;
+    return Object.assign(this.loadedAuthors, {
+      size: this.authorCount
+    });
+  }
+  private set authors(value: ICollection<Author>) {
+    this.loadedAuthors = value;
+    this.authorCount = value.size;
+  }
 
-  @observable private pendingLoadCount = 0;
+  @observable private pendingLoads: ReadonlyArray<string> = [];
 
   @computed private get isLoading() {
-    return this.pendingLoadCount > 0;
+    return this.pendingLoads.length > 0;
   }
 
   @pending private async load() {
-    // TODO(tim): Side-effect mutations cannot be performed synchronously
-    // because it would result in a re-render being ordered while current render
-    // has not yet ended. One may argue that triggering side-effects from a
-    // render is an anti-pattern, but I cannot see how lazy-loading can be
-    // implemented otherwise and I do not consider lazy-loading server-fetched
-    // data an anti-pattern in itself.
-    setTimeout(() => this.pendingLoadCount++);
-
     try {
+
+      this.pendingLoads = [...this.pendingLoads, this.query];
 
       const result = await Author.transport.list({ query: this.query });
 
-      // TODO(tim): How do we guarantee response order integrity? Include the
-      // request query on the response?      
-      this.authors = result.slice();
-      this.authorCount = result.size;
-      this.pendingLoadCount--;
+      if (result.params.query == this.pendingLoads[this.pendingLoads.length - 1])
+        this.authors = result;
+      
+      // Making sure to unlist the *first* occurence of the query that resulted
+      // in `result`, because FIFO.
+      const pendingIndex = this.pendingLoads.indexOf(result.params.query);
+      this.pendingLoads = [
+        ...this.pendingLoads.slice(0, pendingIndex),
+        ...this.pendingLoads.slice(pendingIndex + 1)
+      ];
 
     } catch (err) {
       if (!isTransportError(err))
@@ -90,7 +101,7 @@ import Result from './Result';
         {this.authorCount === 1 ? "journalist" : "journalisten"}
       </strong>
       <ul>
-        {(this.authors || []).map(author =>
+        {this.authors.map(author =>
           <li key={author.id}><Result author={author} /></li>
         )}
       </ul>
