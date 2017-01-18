@@ -10,7 +10,7 @@ import { Author } from 'models';
   render() {
     return <div className="Search-Result">
       <Style>{styles}</Style>
-      <Link to={`https://journa.be/authors/${this.props.author.id}`}>{this.props.author.name}</Link>
+      <Link to={this.props.author.profileUrl}>{this.props.author.name}</Link>
     </div>;
   }
 
