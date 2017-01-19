@@ -1,5 +1,5 @@
 import * as styles from './index.css';
-import { createElement, Component, FormEvent } from 'react';
+import { createElement, Component, PropTypes, FormEvent } from 'react';
 import { Style } from 'react-style';
 import { computed } from 'mobx';
 import { observer } from 'mobx-react';
@@ -25,7 +25,7 @@ class SearchController {
   @observable private loadedAuthors: ReadonlyArray<Author>;
   @observable private authorCount: number;
   @observable private loadedQuery: string;
-  @computed get authors(): Authors {
+  @computed private get authors(): Authors {
     if (this.loadedAuthors == null)
       return;
     return Object.assign(this.loadedAuthors, {
@@ -33,38 +33,46 @@ class SearchController {
       query: this.loadedQuery
     });
   }
-  set authors(value: Authors) {
+  private set authors(value: Authors) {
     this.loadedAuthors = value;
     this.authorCount = value.size;
     this.loadedQuery = value.query;
   }
 
-  @observable private pendingLoads: ReadonlyArray<string> = [];
+  getAuthors() {
+    if (this.query && (!this.authors || this.authors.query !== this.query))
+      reportOnError(this.load());
 
-  @computed get isLoading() {
-    return this.pendingLoads.length > 0;
+    return this.authors;
   }
 
-  @pending async load() {
+  @observable private pendingLoadCount: number = 0;
+
+  @computed get isLoading() {
+    return this.pendingLoadCount > 0;
+  }
+
+  @pending private async load() {
     // TODO(tim): This entire `try..catch` construct stems from the small
     // requirement of catching transport errors (and leaving others), without
     // losing typing on `result`. This should be less intrusive.
     try {
 
-      this.pendingLoads = [...this.pendingLoads, this.query];
+      // TODO(tim): This is a small and subtle requirement for getting lazy-
+      // loading to work. How can we neatly and unobtrusively abstract this
+      // away?
+      await new Promise(setTimeout);
+
+      this.pendingLoadCount++;
 
       const result = await Author.transport.list({ query: this.query });
 
-      if (result.params.query === this.pendingLoads[this.pendingLoads.length - 1])
+      // TODO(tim): Simpler to just check against `this.query`?
+
+      if (result.params.query === this.query)
         this.authors = Object.assign(result, { query: result.params.query });
-      
-      // Making sure to unlist the *first* occurence of the query that resulted
-      // in `result`, because FIFO.
-      const pendingIndex = this.pendingLoads.indexOf(result.params.query);
-      this.pendingLoads = [
-        ...this.pendingLoads.slice(0, pendingIndex),
-        ...this.pendingLoads.slice(pendingIndex + 1)
-      ];
+
+      this.pendingLoadCount--;
 
     } catch (err) {
       if (!isTransportError(err))
@@ -74,17 +82,39 @@ class SearchController {
   
 }
 
-@observer export default class Search extends Component<{}, {}> {
+@observer export default class Search extends Component<{ location }, {}> {
 
-  @field private readonly controller = new SearchController();
-
-  private readonly onSubmitQuery = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    reportOnError(this.controller.load());
+  static readonly contextTypes = {
+    router: PropTypes.object.isRequired
   };
 
-  private readonly onChangeQuery = (e: FormEvent<HTMLInputElement>) => {
-    this.controller.query = e.currentTarget.value;
+  @observable query: string = "";
+
+  // TODO(tim): Since `controller` could be the only field necessary here, we
+  // could delegate creating it to an HOC, and return with our view components
+  // to stateless functional syntax.
+  @field readonly controller = new SearchController();
+
+  componentWillMount() {
+    this.onProps(this.props);
+  }
+  componentWillReceiveProps(props) {
+    this.onProps(props);
+  }
+  onProps({ location }) {
+    if (location.query && location.query.query)
+      this.query = this.controller.query = location.query.query;
+  }
+
+  readonly onSubmitQuery = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    this.context.router.replaceWith({
+      query: { query: this.query }
+    });
+  };
+
+  readonly onChangeQuery = (e: FormEvent<HTMLInputElement>) => {
+    this.query = e.currentTarget.value;
   };
 
   render() {
@@ -92,7 +122,7 @@ class SearchController {
       <Style>{styles}</Style>
       <h1>Vind je?</h1>
       <form onSubmit={this.onSubmitQuery}>
-        <input type="search" value={this.controller.query} onChange={this.onChangeQuery}
+        <input type="search" value={this.query} onChange={this.onChangeQuery}
           placeholder="Lekker zoeken kil!" />
       </form>
       <div className="results">
@@ -101,24 +131,26 @@ class SearchController {
     </div>;
   }
 
-  private renderResults() {
+  renderResults() {
     if (this.controller.isLoading)
       return <Loading />;
     
-    if (this.controller.authors == null)
+    const authors = this.controller.getAuthors();
+
+    if (!authors)
       return null;
-    
-    if (this.controller.authors.size === 0)
+
+    if (authors.size === 0)
       return <strong>niemand gevonden gap :(</strong>;
     
     return <div>
       <strong>
-        {this.controller.authors.length} van {this.controller.authors.size}{" "}
-        {this.controller.authors.size === 1 ? "journalist" : "journalisten"}
-        {" "}gevonden op zoekopdracht “{this.controller.authors.query}”:
+        {authors.length} van {authors.size}{" "}
+        {authors.size === 1 ? "journalist" : "journalisten"}
+        {" "}gevonden op zoekopdracht “{authors.query}”:
       </strong>
       <ul>
-        {this.controller.authors.map(author =>
+        {authors.map(author =>
           <li key={author.id}>
             <Result author={author} />
           </li>
