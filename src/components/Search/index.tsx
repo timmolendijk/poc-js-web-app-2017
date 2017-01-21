@@ -1,7 +1,7 @@
 import * as styles from './index.css';
 import { createElement, Component, PropTypes, FormEvent } from 'react';
 import { Style } from 'react-style';
-import { computed } from 'mobx';
+import * as mobx from 'mobx';
 import { observer } from 'mobx-react';
 import { IIdentifier, field, pending } from 'scoopy';
 import { observable } from 'scoopy-mobx';
@@ -17,7 +17,28 @@ interface Authors extends IVirtualArray<Author> {
 
 class SearchController {
 
-  @observable query: string = "";
+  constructor(props) {
+    Object.assign(this, props);
+    mobx.autorun(() =>
+      this.inputQuery = this.issuedQuery
+    );
+  }
+
+  // TODO(tim): Define types as soon as they are available for React Router 4.
+  @mobx.observable location;
+  readonly router;
+
+  @observable inputQuery: string = "";
+
+  @mobx.computed get issuedQuery(): string {
+    if (this.location.query && this.location.query.query)
+      return this.location.query.query;
+  }
+  set issuedQuery(value: string) {
+    this.router.replaceWith({
+      query: { query: value }
+    });
+  }
 
   // TODO(tim): As soon as we support custom properties on array field values,
   // we can replace the following verbosity for a single observable `authors` of
@@ -25,7 +46,7 @@ class SearchController {
   @observable private loadedAuthors: ReadonlyArray<Author>;
   @observable private authorCount: number;
   @observable private loadedQuery: string;
-  @computed private get authors(): Authors {
+  @mobx.computed private get authors(): Authors {
     if (this.loadedAuthors == null)
       return;
     return Object.assign(this.loadedAuthors, {
@@ -40,7 +61,7 @@ class SearchController {
   }
 
   getAuthors() {
-    if (this.query && (!this.authors || this.authors.query !== this.query))
+    if (this.issuedQuery && (!this.authors || this.authors.query !== this.issuedQuery))
       reportOnError(this.load());
 
     return this.authors;
@@ -48,7 +69,7 @@ class SearchController {
 
   @observable private pendingLoadCount: number = 0;
 
-  @computed get isLoading() {
+  @mobx.computed get isLoading() {
     return this.pendingLoadCount > 0;
   }
 
@@ -65,11 +86,9 @@ class SearchController {
 
       this.pendingLoadCount++;
 
-      const result = await Author.transport.list({ query: this.query });
+      const result = await Author.transport.list({ query: this.issuedQuery });
 
-      // TODO(tim): Simpler to just check against `this.query`?
-
-      if (result.params.query === this.query)
+      if (result.params.query === this.inputQuery)
         this.authors = Object.assign(result, { query: result.params.query });
 
       this.pendingLoadCount--;
@@ -88,33 +107,27 @@ class SearchController {
     router: PropTypes.object.isRequired
   };
 
-  @observable query: string = "";
+  constructor(props, context) {
+    super(props, context);
+    this.controller = new SearchController({ ...context, ...props });
+  }
 
   // TODO(tim): Since `controller` could be the only field necessary here, we
   // could delegate creating it to an HOC, and return with our view components
   // to stateless functional syntax.
-  @field readonly controller = new SearchController();
+  @field readonly controller;
 
-  componentWillMount() {
-    this.onProps(this.props);
-  }
   componentWillReceiveProps(props) {
-    this.onProps(props);
-  }
-  onProps({ location }) {
-    if (location.query && location.query.query)
-      this.query = this.controller.query = location.query.query;
+    Object.assign(this.controller, props);
   }
 
   readonly onSubmitQuery = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    this.context.router.replaceWith({
-      query: { query: this.query }
-    });
+    this.controller.issuedQuery = this.controller.inputQuery;
   };
 
   readonly onChangeQuery = (e: FormEvent<HTMLInputElement>) => {
-    this.query = e.currentTarget.value;
+    this.controller.inputQuery = e.currentTarget.value;
   };
 
   render() {
@@ -122,8 +135,8 @@ class SearchController {
       <Style>{styles}</Style>
       <h1>Vind je?</h1>
       <form onSubmit={this.onSubmitQuery}>
-        <input type="search" value={this.query} onChange={this.onChangeQuery}
-          placeholder="Lekker zoeken kil!" />
+        <input type="search" placeholder="Lekker zoeken kil!" autoFocus={true}
+          value={this.controller.inputQuery} onChange={this.onChangeQuery} />
       </form>
       <div className="results">
         {this.renderResults()}
