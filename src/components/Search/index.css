@@ -1,16 +1,25 @@
-.Search > form {
-  font-size: 2em;
+.Search > form .matchType {
+  padding: .5em 1em;
+  line-height: 3;
+  cursor: pointer;
+}
+.Search > form .matchType.isSelected {
+  background-color: lightsalmon;
+}
+
+.Search > form .matchType span {
+  color: rgba(0, 0, 0, .4);
 }
 
 .Search > form input[type="search"] {
   -webkit-appearance: none;
-  font-size: inherit;
+  font-size: 2em;
   padding: .5em 1em;
   width: 100%;
 }
 
 .Search .results {
-  margin-top: 1rem;
+  margin-top: 1em;
 }
 
 .Search .results ul {
