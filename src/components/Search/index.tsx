@@ -126,12 +126,7 @@ class SearchController {
 
   constructor(props) {
     Object.assign(this, props);
-    mobx.autorun(() => {
-      // `autorun` will be skipped in a server environment, so field value
-      // initialization should never be done here.
-      if (this.issuedQuery)
-        this.inputQuery = this.issuedQuery;
-    });
+    this.inputQuery = this.issuedQuery || "";
   }
 
   readonly jwt: string;
@@ -139,7 +134,7 @@ class SearchController {
   readonly router;
   @mobx.observable.ref location;
 
-  @observable inputQuery: string = "";
+  @observable inputQuery: string;
 
   @mobx.computed get issuedQuery(): string {
     if (this.location.query && this.location.query.query)
@@ -168,11 +163,11 @@ class SearchController {
     });
   }
 
-  @field private readonly authorsMatcher = new SearchOperation(this, 'authors');
-  @field private readonly articlesMatcher = new SearchOperation(this, 'articles');
+  @field private readonly authorsSearch = new SearchOperation(this, 'authors');
+  @field private readonly articlesSearch = new SearchOperation(this, 'articles');
 
   getSearch(matchType: IMatchType = this.matchType): SearchOperation {
-    return this[`${matchType}Matcher`];
+    return this[`${matchType}Search`];
   }
 
 }
@@ -210,11 +205,11 @@ class SearchController {
   render() {
     return <div className="Search">
       <Style>{styles}</Style>
-      <h1>Zoekon</h1>
+      <h1>Zoekings</h1>
       <form onSubmit={this.onSubmitQuery}>
         {this.renderMatchType('authors', "op naam")}
         {this.renderMatchType('articles', "op inhoud")}
-        <input type="search" placeholder="Kapot spange zoekings kil…" autoFocus={true}
+        <input type="search" placeholder="Tiep dan kil…" autoFocus={true}
           value={this.controller.inputQuery} onChange={this.onChangeQuery} />
       </form>
       <div className="results">
