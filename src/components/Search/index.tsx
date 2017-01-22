@@ -101,7 +101,7 @@ class SearchOperation {
       const list = await Author.transport.list({
         query: this.controller.issuedQuery,
         match: this.matchType
-      });
+      }, this.controller.jwt);
 
       if (list.params.query === this.controller.inputQuery)
         this.results = Object.assign(list, { query: list.params.query });
@@ -127,14 +127,17 @@ class SearchController {
   constructor(props) {
     Object.assign(this, props);
     mobx.autorun(() => {
+      // `autorun` will be skipped in a server environment, so field value
+      // initialization should never be done here.
       if (this.issuedQuery)
         this.inputQuery = this.issuedQuery;
     });
   }
 
+  readonly jwt: string;
   // TODO(tim): Define types as soon as they are available for React Router 4.
-  @mobx.observable location;
   readonly router;
+  @mobx.observable.ref location;
 
   @observable inputQuery: string = "";
 
@@ -177,7 +180,8 @@ class SearchController {
 @observer export default class Search extends Component<{ location }, {}> {
 
   static readonly contextTypes = {
-    router: PropTypes.object.isRequired
+    router: PropTypes.object.isRequired,
+    jwt: PropTypes.string
   };
 
   constructor(props, context) {
@@ -210,10 +214,12 @@ class SearchController {
       <form onSubmit={this.onSubmitQuery}>
         {this.renderMatchType('authors', "op naam")}
         {this.renderMatchType('articles', "op inhoud")}
-        <input type="search" placeholder="Lekker zoeken kil…" autoFocus={true}
+        <input type="search" placeholder="Kapot spange zoekings kil…" autoFocus={true}
           value={this.controller.inputQuery} onChange={this.onChangeQuery} />
       </form>
-      {this.renderResults()}
+      <div className="results">
+        {this.renderResults()}
+      </div>
     </div>;
   }
 
@@ -236,14 +242,15 @@ class SearchController {
   }
 
   renderResults() {
-    if (this.controller.getSearch().isLoading)
+    const search = this.controller.getSearch();
+
+    if (search.isLoading)
       return <Loading />;
     
-    const error = this.controller.getSearch().error;
-    if (error)
-      return <strong>whoops {error}</strong>;
+    if (search.error)
+      return <strong>whoopsie! <pre>{search.error}</pre></strong>;
     
-    const results = this.controller.getSearch().getResults();
+    const results = search.getResults();
 
     if (!results)
       return null;
@@ -251,7 +258,7 @@ class SearchController {
     if (results.size === 0)
       return <strong>niemand gevonden gap :(</strong>;
     
-    return <div className="results">
+    return <div>
       <strong>
         {results.length} van {results.size}{" "}
         {results.size === 1 ? "journalist" : "journalisten"}

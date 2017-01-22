@@ -11,7 +11,7 @@ import Search from './Search';
 import ScoopyTest from './ScoopyTest';
 import NotFound from './NotFound';
 
-export default class DynamicBase extends Component<{ store: Store<any> }, {}> {
+export default class DynamicBase extends Component<{ store: Store<any>, jwt?: string }, {}> {
 
   private renderDevTools() {
     if (process.env.NODE_ENV != 'development')
@@ -21,7 +21,7 @@ export default class DynamicBase extends Component<{ store: Store<any> }, {}> {
   }
 
   render() {
-    return <Base store={this.props.store}>
+    return <Base store={this.props.store} jwt={this.props.jwt}>
       {this.renderDevTools()}
       <Page>
         <Match exactly pattern="/search" component={Search} />

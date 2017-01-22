@@ -20,7 +20,7 @@ const renderOnMatch = (Base: IBaseConstructor) => async function (context, next)
 
   const renderComponent =
     <ServerRouter location={context.url} context={renderContext}>
-      <Base store={store} />
+      <Base store={store} jwt={context.cookies.get('id_token')} />
     </ServerRouter>;
   
   let html;
@@ -64,7 +64,6 @@ const renderOnMatch = (Base: IBaseConstructor) => async function (context, next)
 
 };
 
-
 const server = new Koa();
 
 server.use(async function (context, next) {
@@ -78,9 +77,8 @@ server.use(renderOnMatch(AmpBase));
 server.use(renderOnMatch(DynamicBase));
 
 server.listen(3000, 'localhost', function (err, result) {
-  if (err) {
+  if (err)
     console.error(err);
-  }
 
   if (process.env.NODE_ENV == 'development')
     console.log('Server listening at localhost:3000');

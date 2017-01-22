@@ -9,7 +9,7 @@ import Page from './Page';
 import Event from './Event';
 import NotFound from './NotFound';
 
-export default class AmpBase extends Component<{ store: Store<any> }, {}> {
+export default class AmpBase extends Component<{ store: Store<any>, jwt?: string }, {}> {
 
   render() {
     const ampStandardLib = {
@@ -17,7 +17,7 @@ export default class AmpBase extends Component<{ store: Store<any> }, {}> {
       src: "https://cdn.ampproject.org/v0.js"
     };
 
-    return <Base store={this.props.store}>
+    return <Base store={this.props.store} jwt={this.props.jwt}>
       <Page>
         <Helmet script={[ampStandardLib]} />
         <Match pattern="/event" component={Event} />
