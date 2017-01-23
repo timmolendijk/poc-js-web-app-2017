@@ -3,12 +3,13 @@ import { createElement, Component, PropTypes, FormEvent } from 'react';
 import { Style } from 'react-style';
 import * as mobx from 'mobx';
 import { observer } from 'mobx-react';
-import { IIdentifier, field, pending } from 'scoopy';
+import { field, pending } from 'scoopy';
 import { observable } from 'scoopy-mobx';
 import { reportOnError } from 'error';
 import { isTransportError } from 'transport';
 import { IVirtualArray, Author } from 'models';
 import * as classNames from 'classnames';
+import { debounce } from 'lodash';
 import Loading from '../Loading';
 import Result from './Result';
 
@@ -37,7 +38,7 @@ class SearchOperation {
   @mobx.computed private get results(): IResults {
     if (this.resultsLoaded == null)
       return;
-    return Object.assign(this.resultsLoaded, {
+    return Object.assign([], this.resultsLoaded, {
       size: this.resultsSize,
       query: this.resultsQuery
     });
@@ -48,45 +49,60 @@ class SearchOperation {
       this.resultsSize = undefined;
       this.resultsQuery = undefined;
     } else {
-      this.resultsLoaded = value;
+      this.resultsLoaded = value.slice();
       this.resultsSize = value.size;
       this.resultsQuery = value.query;
     }
   }
 
   getResults() {
-    // Lazy-loading data is triggered iff we are not in an error state.
-    const needsLoad: boolean = !this.error &&
-      // Empty queries will be ignored unless we currently have results that may
-      // be reset.
+    // TODO(tim): Wow, does this really have to be so complicated??
+    const needsLoad: boolean =
+      // Never lazy-load data when we are in an error state to prevent ending up
+      // in an infinite loop.
+      !this.error &&
+      // Ignore empty queries unless we have some results to reset.
       (this.controller.issuedQuery || this.results) &&
-      // Issued query should be different from the query that generated the
-      // current results.
-      (!this.results || this.results.query !== this.controller.issuedQuery);
+      this.pendingQuery ?
+        // Do nothing if issued query is currently being loaded, …
+        this.controller.issuedQuery !== this.pendingQuery :
+        // … or if no loads are pending, do nothing if results of issued query
+        // are already loaded.
+        (!this.results || this.controller.issuedQuery !== this.results.query);
     
     if (needsLoad)
-      reportOnError(this.load());
+      this.load();
 
     return this.results;
   }
 
   @observable error: string;
 
-  @observable private pendingLoadCount: number = 0;
+  @observable private pendingQuery: string;
 
   @mobx.computed get isLoading() {
-    return this.pendingLoadCount > 0;
+    return Boolean(this.pendingQuery);
   }
 
-  @pending private async load() {
+  private readonly load = debounce(
+    () => reportOnError(this.dangerouslyLoadWithoutDebounce()),
+    300,
+    { leading: true, trailing: false }
+  );
+
+  // TODO(tim): As soon as `pending` would support wrapping a function directly,
+  // we could include the leading debounce here and get rid of this stupid name.
+  @pending private async dangerouslyLoadWithoutDebounce() {
     // TODO(tim): This is a small and subtle requirement for getting lazy-
     // loading to work. How can we neatly and unobtrusively abstract this
     // away?
     await new Promise(setTimeout);
 
+    const query = this.controller.issuedQuery;
+
     this.error = undefined;
 
-    if (!this.controller.issuedQuery) {
+    if (!query) {
       this.results = undefined;
       return;
     }
@@ -96,14 +112,16 @@ class SearchOperation {
     // losing typing on `result`. This should be less intrusive.
     try {
 
-      this.pendingLoadCount++;
+      this.pendingQuery = query;
 
       const list = await Author.transport.list({
-        query: this.controller.issuedQuery,
-        match: this.matchType
+        query, match: this.matchType
       }, this.controller.jwt);
 
+      // TODO(tim): Comparing against `inputQuery` is not entirely safe as soon
+      // as we start doing string preprocessing such as trimming whitespace.
       if (list.params.query === this.controller.inputQuery)
+        // TODO(tim): Better not mutate `list`.
         this.results = Object.assign(list, { query: list.params.query });
       
     } catch (err) {
@@ -115,7 +133,11 @@ class SearchOperation {
       
     } finally {
 
-      this.pendingLoadCount--;
+      // Another load operation (using another query) may have been started
+      // while this one was waiting, so be careful not to reset the pending
+      // query in that scenario.
+      if (query === this.pendingQuery)
+        this.pendingQuery = undefined;
 
     }
   }
@@ -136,18 +158,21 @@ class SearchController {
 
   @observable inputQuery: string;
 
-  @mobx.computed get issuedQuery(): string {
+  get issuedQuery(): string {
     if (this.location.query && this.location.query.query)
       return this.location.query.query;
   }
-  set issuedQuery(value: string) {
-    this.router.replaceWith({
+
+  readonly issueQuery = debounce(
+    () => this.router.replaceWith({
       query: {
         ...this.location.query,
-        query: value || undefined
+        query: this.inputQuery || undefined
       }
-    });
-  }
+    }),
+    300,
+    { leading: false, trailing: true }
+  );
 
   @mobx.computed get matchType(): IMatchType {
     if (this.location.query && this.location.query.match)
@@ -195,11 +220,12 @@ class SearchController {
 
   readonly onSubmitQuery = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    this.controller.issuedQuery = this.controller.inputQuery;
+    this.controller.issueQuery.flush();
   };
 
   readonly onChangeQuery = (e: FormEvent<HTMLInputElement>) => {
     this.controller.inputQuery = e.currentTarget.value;
+    this.controller.issueQuery();
   };
 
   render() {
