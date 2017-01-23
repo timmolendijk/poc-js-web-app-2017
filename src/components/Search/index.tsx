@@ -63,13 +63,13 @@ class SearchOperation {
       !this.error &&
       // Ignore empty queries unless we have some results to reset.
       (this.controller.issuedQuery || this.results) &&
-      this.pendingQuery ?
+      (this.pendingQuery ?
         // Do nothing if issued query is currently being loaded, …
         this.controller.issuedQuery !== this.pendingQuery :
         // … or if no loads are pending, do nothing if results of issued query
         // are already loaded.
-        (!this.results || this.controller.issuedQuery !== this.results.query);
-    
+        (!this.results || this.controller.issuedQuery !== this.results.query));
+
     if (needsLoad)
       this.load();
 
@@ -118,11 +118,13 @@ class SearchOperation {
         query, match: this.matchType
       }, this.controller.jwt);
 
+      // The (edge-case) scenario of no pending query means that another query
+      // was issued *after* ours but returned *before* us, making our results
+      // no longer relevant.
       // TODO(tim): Comparing against `inputQuery` is not entirely safe as soon
       // as we start doing string preprocessing such as trimming whitespace.
-      if (list.params.query === this.controller.inputQuery)
-        // TODO(tim): Better not mutate `list`.
-        this.results = Object.assign(list, { query: list.params.query });
+      if (this.pendingQuery && list.params.query === this.controller.inputQuery)
+        this.results = Object.assign([], list, { query: list.params.query });
       
     } catch (err) {
 
@@ -134,8 +136,8 @@ class SearchOperation {
     } finally {
 
       // Another load operation (using another query) may have been started
-      // while this one was waiting, so be careful not to reset the pending
-      // query in that scenario.
+      // while this one was busy, so be careful not to reset the pending query
+      // in that scenario.
       if (query === this.pendingQuery)
         this.pendingQuery = undefined;
 
@@ -158,7 +160,7 @@ class SearchController {
 
   @observable inputQuery: string;
 
-  get issuedQuery(): string {
+  @mobx.computed get issuedQuery(): string {
     if (this.location.query && this.location.query.query)
       return this.location.query.query;
   }
