@@ -10,7 +10,22 @@ import { Author } from 'models';
   render() {
     return <div className="Search-Result">
       <Style>{styles}</Style>
-      <Link to={this.props.author.profileUrl}>{this.props.author.name}</Link>
+      <Link to={this.props.author.profileUrl} className="authorName">{this.props.author.name}</Link>
+      {this.renderArticles()}
+    </div>;
+  }
+
+  renderArticles() {
+    if (!this.props.author.articles)
+      return null;
+    
+    return <div>
+      <p>{this.props.author.articles.size} relevante artikelen:</p>
+      <ul>
+        {this.props.author.articles.map(article =>
+          <li key={article.id}>{article.title}</li>
+        )}
+      </ul>
     </div>;
   }
 

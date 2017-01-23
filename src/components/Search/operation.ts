@@ -7,6 +7,7 @@ import { isTransportError } from 'transport';
 import { IVirtualArray, Author } from 'models';
 import SearchController, { IMatchType } from './controller';
 
+// TODO(tim): Why not just reuse `IAuthorListResult`?
 interface IResults extends IVirtualArray<Author> {
   query: string;
 }

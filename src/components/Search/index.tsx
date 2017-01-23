@@ -85,12 +85,12 @@ import Result from './Result';
       return <strong>niemand gevonden gap :(</strong>;
     
     return <div>
-      <strong>
-        {results.length} van {results.size}{" "}
+      <em>
+        {results.length} van in totaal {results.size}{" "}
         {results.size === 1 ? "journalist" : "journalisten"}
         {" "}gevonden op zoekopdracht “{results.query}”:
-      </strong>
-      <ul>
+      </em>
+      <ul className="authors">
         {results.map(author =>
           <li key={author.id}>
             <Result author={author} />

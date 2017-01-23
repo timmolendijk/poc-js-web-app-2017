@@ -1,5 +1,15 @@
 .Search-Result {
   background-color: white;
   margin-top: .5rem;
-  padding: .5rem 1rem;
+  padding: 1rem;
+}
+
+.Search-Result .authorName {
+  display: block;
+  font-weight: 700;
+}
+
+.Search-Result ul {
+  list-style-type: square;
+  padding-left: 1.4em;
 }
