@@ -75,6 +75,8 @@ export default class SearchOperation {
     return Boolean(this.pendingQuery);
   }
 
+  // TODO(tim): Are we sure that we don't want `@pending` here instead of on the
+  // wrapped method?
   private readonly load = debounce(
     () => reportOnError(this.dangerouslyLoadWithoutDebounce()),
     300,
