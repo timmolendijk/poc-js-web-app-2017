@@ -5,7 +5,7 @@ import { Link } from 'react-router';
 import { observer } from 'mobx-react';
 import { Author } from 'models';
 
-@observer export default class Result extends Component<{ author: Author }, {}> {
+@observer export default class Result extends Component<{ author: Author, includeArticles?: boolean }, {}> {
 
   render() {
     return <div className="Search-Result">
@@ -16,13 +16,18 @@ import { Author } from 'models';
   }
 
   renderArticles() {
-    if (!this.props.author.articles)
+    if (this.props.includeArticles !== true)
       return null;
     
+    const articles = this.props.author.getArticles();
+
+    if (!articles)
+      return null;
+
     return <div>
-      <p>{this.props.author.articles.size} relevante artikelen:</p>
+      <p>{articles.size} relevante artikelen:</p>
       <ul>
-        {this.props.author.articles.map(article =>
+        {articles.map(article =>
           <li key={article.id}>{article.title}</li>
         )}
       </ul>

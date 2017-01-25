@@ -93,7 +93,7 @@ import Result from './Result';
       <ul className="authors">
         {results.map(author =>
           <li key={author.id}>
-            <Result author={author} />
+            <Result author={author} includeArticles={this.controller.matchType === 'articles'} />
           </li>
         )}
       </ul>
